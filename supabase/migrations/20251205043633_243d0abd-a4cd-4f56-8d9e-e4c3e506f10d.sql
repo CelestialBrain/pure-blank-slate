@@ -13,11 +13,19 @@ CREATE TABLE IF NOT EXISTS extraction_ground_truth (
 ALTER TABLE extraction_ground_truth ENABLE ROW LEVEL SECURITY;
 
 -- Policies for extraction_ground_truth
-CREATE POLICY "Admins can manage ground truth" ON extraction_ground_truth
-  FOR ALL USING (has_role(auth.uid(), 'admin'));
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage ground truth" ON extraction_ground_truth
+    FOR ALL USING (has_role(auth.uid(), 'admin'));
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'policy "Admins can manage ground truth" already exists, skipping';
+END $$;
 
-CREATE POLICY "Authenticated users can view ground truth" ON extraction_ground_truth
-  FOR SELECT USING (auth.uid() IS NOT NULL);
+DO $$ BEGIN
+  CREATE POLICY "Authenticated users can view ground truth" ON extraction_ground_truth
+    FOR SELECT USING (auth.uid() IS NOT NULL);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'policy "Authenticated users can view ground truth" already exists, skipping';
+END $$;
 
 -- Create pattern_suggestions table for tracking suggested patterns
 CREATE TABLE IF NOT EXISTS pattern_suggestions (
@@ -36,11 +44,23 @@ CREATE TABLE IF NOT EXISTS pattern_suggestions (
 ALTER TABLE pattern_suggestions ENABLE ROW LEVEL SECURITY;
 
 -- Policies for pattern_suggestions
-CREATE POLICY "Admins can manage pattern suggestions" ON pattern_suggestions
-  FOR ALL USING (has_role(auth.uid(), 'admin'));
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage pattern suggestions" ON pattern_suggestions
+    FOR ALL USING (has_role(auth.uid(), 'admin'));
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'policy "Admins can manage pattern suggestions" already exists, skipping';
+END $$;
 
-CREATE POLICY "Authenticated users can create suggestions" ON pattern_suggestions
-  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+DO $$ BEGIN
+  CREATE POLICY "Authenticated users can create suggestions" ON pattern_suggestions
+    FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'policy "Authenticated users can create suggestions" already exists, skipping';
+END $$;
 
-CREATE POLICY "Authenticated users can view suggestions" ON pattern_suggestions
-  FOR SELECT USING (auth.uid() IS NOT NULL);
+DO $$ BEGIN
+  CREATE POLICY "Authenticated users can view suggestions" ON pattern_suggestions
+    FOR SELECT USING (auth.uid() IS NOT NULL);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'policy "Authenticated users can view suggestions" already exists, skipping';
+END $$;
