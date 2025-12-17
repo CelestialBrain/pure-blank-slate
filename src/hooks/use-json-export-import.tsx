@@ -252,97 +252,47 @@ export const useJsonExportImport = ({ tableName, displayName, onImportComplete }
           throw new Error('Invalid format: Expected an array of records');
         }
 
-        let imported = 0;
-        let updated = 0;
-        let failed = 0;
+        // Use upsert for better performance with large datasets
+        const cleanedData = data.map(record => {
+          const { id, created_at, updated_at, ...recordData } = record;
 
-        for (const record of data) {
-          try {
-            const { id, created_at, updated_at, ...recordData } = record;
-
-            let uniqueField = 'id';
-            let uniqueValue = id;
-
-            if (tableName === 'known_venues') {
-              uniqueField = 'name';
-              uniqueValue = record.name;
-            } else if (tableName === 'extraction_patterns') {
-              const { data: existing } = await supabase
-                .from(tableName)
-                .select('id')
-                .eq('pattern_type', record.pattern_type)
-                .eq('pattern_regex', record.pattern_regex)
-                .maybeSingle();
-
-              if (existing) {
-                await supabase
-                  .from(tableName)
-                  .update(recordData)
-                  .eq('id', existing.id);
-                updated++;
-                continue;
-              } else {
-                await supabase
-                  .from(tableName)
-                  .insert(recordData);
-                imported++;
-                continue;
-              }
-            } else if (tableName === 'geo_configuration') {
-              const { data: existing } = await supabase
-                .from(tableName)
-                .select('id')
-                .eq('config_type', record.config_type)
-                .eq('config_key', record.config_key)
-                .maybeSingle();
-
-              if (existing) {
-                await supabase
-                  .from(tableName)
-                  .update(recordData)
-                  .eq('id', existing.id);
-                updated++;
-                continue;
-              } else {
-                await supabase
-                  .from(tableName)
-                  .insert(recordData);
-                imported++;
-                continue;
-              }
-            } else if (tableName === 'instagram_accounts') {
-              uniqueField = 'username';
-              uniqueValue = record.username?.toLowerCase();
-              recordData.username = recordData.username?.toLowerCase();
-            }
-
-            const { data: existing } = await supabase
-              .from(tableName)
-              .select('id')
-              .eq(uniqueField, uniqueValue)
-              .maybeSingle();
-
-            if (existing) {
-              await supabase
-                .from(tableName)
-                .update(recordData)
-                .eq('id', existing.id);
-              updated++;
-            } else {
-              await supabase
-                .from(tableName)
-                .insert(recordData);
-              imported++;
-            }
-          } catch (err: any) {
-            console.error(`Failed to import record:`, err);
-            failed++;
+          // Handle table-specific transformations
+          if (tableName === 'instagram_accounts' && recordData.username) {
+            recordData.username = recordData.username.toLowerCase();
           }
+
+          return recordData;
+        });
+
+        // Perform upsert based on table type
+        let result;
+        if (tableName === 'known_venues') {
+          result = await supabase
+            .from(tableName)
+            .upsert(cleanedData, { onConflict: 'name' });
+        } else if (tableName === 'extraction_patterns') {
+          result = await supabase
+            .from(tableName)
+            .upsert(cleanedData, { onConflict: 'pattern_type,pattern_regex' });
+        } else if (tableName === 'geo_configuration') {
+          result = await supabase
+            .from(tableName)
+            .upsert(cleanedData, { onConflict: 'config_type,config_key' });
+        } else if (tableName === 'instagram_accounts') {
+          result = await supabase
+            .from(tableName)
+            .upsert(cleanedData, { onConflict: 'username' });
+        } else {
+          result = await supabase
+            .from(tableName)
+            .upsert(cleanedData);
         }
+
+        if (result.error) throw result.error;
 
         toast({
           title: "Save Complete",
-          description: `Imported: ${imported}, Updated: ${updated}, Failed: ${failed}`,
+          description: `Successfully saved ${cleanedData.length} records`,
         });
 
         onImportComplete?.();
