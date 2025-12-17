@@ -1,0 +1,5 @@
+# Ignore all export files
+*.json
+
+# But allow README
+!README.md
