@@ -7,18 +7,30 @@ ADD COLUMN IF NOT EXISTS price_max NUMERIC,
 ADD COLUMN IF NOT EXISTS price_notes TEXT,
 ADD COLUMN IF NOT EXISTS location_status TEXT DEFAULT 'confirmed';
 
--- Add CHECK constraints for valid enum values
-ALTER TABLE public.instagram_posts
-ADD CONSTRAINT instagram_posts_event_status_check 
-CHECK (event_status IS NULL OR event_status IN ('confirmed', 'rescheduled', 'cancelled', 'postponed', 'tentative'));
+-- Add CHECK constraints for valid enum values (skip if exists)
+DO $$ BEGIN
+  ALTER TABLE public.instagram_posts
+  ADD CONSTRAINT instagram_posts_event_status_check
+  CHECK (event_status IS NULL OR event_status IN ('confirmed', 'rescheduled', 'cancelled', 'postponed', 'tentative'));
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'constraint instagram_posts_event_status_check already exists, skipping';
+END $$;
 
-ALTER TABLE public.instagram_posts
-ADD CONSTRAINT instagram_posts_availability_status_check 
-CHECK (availability_status IS NULL OR availability_status IN ('available', 'sold_out', 'waitlist', 'limited', 'few_left'));
+DO $$ BEGIN
+  ALTER TABLE public.instagram_posts
+  ADD CONSTRAINT instagram_posts_availability_status_check
+  CHECK (availability_status IS NULL OR availability_status IN ('available', 'sold_out', 'waitlist', 'limited', 'few_left'));
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'constraint instagram_posts_availability_status_check already exists, skipping';
+END $$;
 
-ALTER TABLE public.instagram_posts
-ADD CONSTRAINT instagram_posts_location_status_check 
-CHECK (location_status IS NULL OR location_status IN ('confirmed', 'tba', 'secret', 'dm_for_details'));
+DO $$ BEGIN
+  ALTER TABLE public.instagram_posts
+  ADD CONSTRAINT instagram_posts_location_status_check
+  CHECK (location_status IS NULL OR location_status IN ('confirmed', 'tba', 'secret', 'dm_for_details'));
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'constraint instagram_posts_location_status_check already exists, skipping';
+END $$;
 
 -- Create event_dates table for multi-day events
 CREATE TABLE IF NOT EXISTS public.event_dates (
