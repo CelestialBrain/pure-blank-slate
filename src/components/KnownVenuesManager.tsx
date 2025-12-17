@@ -83,7 +83,7 @@ export const KnownVenuesManager = () => {
   const [hoursEditorOpen, setHoursEditorOpen] = useState(false);
   const [editingHoursVenue, setEditingHoursVenue] = useState<KnownVenue | null>(null);
 
-  const { ImportButton } = useJsonExportImport({
+  const { ViewJsonButton } = useJsonExportImport({
     tableName: 'known_venues',
     displayName: 'venues',
     onImportComplete: () => queryClient.invalidateQueries({ queryKey: ['known-venues'] })
@@ -285,7 +285,7 @@ export const KnownVenuesManager = () => {
               <Download className="h-4 w-4 mr-1" />
               Export
             </Button>
-            <ImportButton />
+            <ViewJsonButton />
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>

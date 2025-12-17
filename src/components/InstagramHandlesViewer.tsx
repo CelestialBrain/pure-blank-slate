@@ -39,7 +39,7 @@ export const InstagramHandlesViewer = () => {
   const [activeTab, setActiveTab] = useState("tracked");
   const queryClient = useQueryClient();
 
-  const { ExportButton, ImportButton } = useJsonExportImport({
+  const { ExportButton, ViewJsonButton } = useJsonExportImport({
     tableName: 'instagram_accounts',
     displayName: 'accounts',
     onImportComplete: () => queryClient.invalidateQueries({ queryKey: ['instagram-accounts'] })
@@ -178,7 +178,7 @@ export const InstagramHandlesViewer = () => {
           </div>
           <div className="flex gap-2">
             <ExportButton />
-            <ImportButton />
+            <ViewJsonButton />
           </div>
         </div>
         <div className="mt-4 relative">

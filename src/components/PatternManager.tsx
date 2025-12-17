@@ -42,7 +42,7 @@ export const PatternManager = () => {
   const [editingPattern, setEditingPattern] = useState<EditingPattern | null>(null);
   const queryClient = useQueryClient();
 
-  const { ExportButton, ImportButton } = useJsonExportImport({
+  const { ExportButton, ViewJsonButton } = useJsonExportImport({
     tableName: 'extraction_patterns',
     displayName: 'patterns',
     onImportComplete: () => queryClient.invalidateQueries({ queryKey: ['extraction-patterns'] })
@@ -303,7 +303,7 @@ export const PatternManager = () => {
             </select>
             <div className="flex gap-2">
               <ExportButton />
-              <ImportButton />
+              <ViewJsonButton />
             </div>
           </div>
 
