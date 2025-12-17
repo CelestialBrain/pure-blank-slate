@@ -5,8 +5,8 @@
  * Checks recent extractions to verify AI changes are working
  */
 
-const SUPABASE_URL = 'https://ltgxvskqotbuclrinhej.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0Z3h2c2txb3RidWNscmluaGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyMjY1NTMsImV4cCI6MjA3NjgwMjU1M30.94ibR92U_ekHBl0BN0w-2eVSGMfPmgEa23AjInBk1hU';
+const SUPABASE_URL = 'https://azdcshjzkcidqmkpxuqz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6ZGNzaGp6a2NpZHFta3B4dXF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5ODk0NTEsImV4cCI6MjA4MTU2NTQ1MX0.iFQi_eCmiWkkzF8VxasSl7PUzhdVz0pwagEEDo_MfbE';
 
 async function querySupabase(table, options = {}) {
     let url = `${SUPABASE_URL}/rest/v1/${table}?`;

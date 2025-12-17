@@ -10,8 +10,8 @@ import time
 from typing import Dict, Any
 
 # API Configuration
-API_URL = "https://ltgxvskqotbuclrinhej.supabase.co/functions/v1/ai-extract-event"
-API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0Z3h2c2txb3RidWNscmluaGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyMjY1NTMsImV4cCI6MjA3NjgwMjU1M30.94ibR92U_ekHBl0BN0w-2eVSGMfPmgEa23AjInBk1hU"
+API_URL = "https://azdcshjzkcidqmkpxuqz.supabase.co/functions/v1/ai-extract-event"
+API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6ZGNzaGp6a2NpZHFta3B4dXF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5ODk0NTEsImV4cCI6MjA4MTU2NTQ1MX0.iFQi_eCmiWkkzF8VxasSl7PUzhdVz0pwagEEDo_MfbE"
 
 def call_ai_extraction(caption: str, location_hint: str, post_id: str, posted_at: str) -> Dict[str, Any]:
     """Call the AI extraction API"""

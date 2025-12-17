@@ -11,8 +11,8 @@ SELECT cron.schedule(
   $$
   SELECT
     net.http_post(
-      url:='https://ltgxvskqotbuclrinhej.supabase.co/functions/v1/cleanup-old-events',
-      headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0Z3h2c2txb3RidWNscmluaGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyMjY1NTMsImV4cCI6MjA3NjgwMjU1M30.94ibR92U_ekHBl0BN0w-2eVSGMfPmgEa23AjInBk1hU"}'::jsonb
+      url:='https://azdcshjzkcidqmkpxuqz.supabase.co/functions/v1/cleanup-old-events',
+      headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6ZGNzaGp6a2NpZHFta3B4dXF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5ODk0NTEsImV4cCI6MjA4MTU2NTQ1MX0.iFQi_eCmiWkkzF8VxasSl7PUzhdVz0pwagEEDo_MfbE"}'::jsonb
     ) as request_id;
   $$
 );
