@@ -253,8 +253,9 @@ export const useJsonExportImport = ({ tableName, displayName, onImportComplete }
         }
 
         // Use upsert for better performance with large datasets
+        // Keep the id field for proper upsert matching
         const cleanedData = data.map(record => {
-          const { id, created_at, updated_at, ...recordData } = record;
+          const { created_at, updated_at, ...recordData } = record;
 
           // Handle table-specific transformations
           if (tableName === 'instagram_accounts' && recordData.username) {
@@ -264,29 +265,10 @@ export const useJsonExportImport = ({ tableName, displayName, onImportComplete }
           return recordData;
         });
 
-        // Perform upsert based on table type
-        let result;
-        if (tableName === 'known_venues') {
-          result = await supabase
-            .from(tableName)
-            .upsert(cleanedData, { onConflict: 'name' });
-        } else if (tableName === 'extraction_patterns') {
-          result = await supabase
-            .from(tableName)
-            .upsert(cleanedData, { onConflict: 'pattern_type,pattern_regex' });
-        } else if (tableName === 'geo_configuration') {
-          result = await supabase
-            .from(tableName)
-            .upsert(cleanedData, { onConflict: 'config_type,config_key' });
-        } else if (tableName === 'instagram_accounts') {
-          result = await supabase
-            .from(tableName)
-            .upsert(cleanedData, { onConflict: 'username' });
-        } else {
-          result = await supabase
-            .from(tableName)
-            .upsert(cleanedData);
-        }
+        // Perform upsert - Supabase will use primary key (id) by default
+        const result = await supabase
+          .from(tableName)
+          .upsert(cleanedData);
 
         if (result.error) throw result.error;
 
