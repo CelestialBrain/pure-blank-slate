@@ -1,8 +1,8 @@
 -- PHASE 3: Add missing venues from logs
 -- PHASE 4: Fix geocodes and dedupe aliases
 
--- Add missing venues
-INSERT INTO known_venues (name, aliases, lat, lng, city, address) VALUES
+-- Add missing venues (commented out - venues seeded via scripts)
+-- INSERT INTO known_venues (name, aliases, lat, lng, city, address) VALUES
 --   ('Fireside', ARRAY['Fireside Molito', 'Fireside Bar', 'Fireside by Kettle'], 14.4175, 121.0395, 'Muntinlupa', 'Molito Lifestyle Center'),
 --   ('Bench Tower', ARRAY['The Bench Tower', 'Bench Tower BGC', 'Bench Tower Taguig'], 14.5536, 121.0469, 'Taguig', '30th Street, BGC'),
 --   ('East Wing Atrium', ARRAY['East Wing', 'Estancia East Wing', 'East Wing Estancia'], 14.5826, 121.0603, 'Pasig', 'Estancia Capitol Commons'),
@@ -13,7 +13,7 @@ INSERT INTO known_venues (name, aliases, lat, lng, city, address) VALUES
 --   ('Matheus Bldg', ARRAY['Matheus Building', 'The Matheus Building', 'Matheus Bldg Makati'], 14.5587, 121.0239, 'Makati', 'Poblacion, Makati'),
 --   ('Petite Bakery', ARRAY['Petite Bakery Makati', 'Petite BGC'], 14.5505, 121.0515, 'Taguig', 'BGC'),
 --   ('Gyud Food', ARRAY['Gyud', 'Gyud Food UP', 'Gyud UP Diliman', 'Gyud Food UP Diliman'], 14.6535, 121.0693, 'Quezon City', 'UP Diliman Campus')
--- -- ON CONFLICT (name) DO UPDATE SET 
+-- ON CONFLICT (name) DO UPDATE SET
 --   aliases = EXCLUDED.aliases,
 --   lat = EXCLUDED.lat,
 --   lng = EXCLUDED.lng,
