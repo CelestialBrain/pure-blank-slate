@@ -1,0 +1,259 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 240 10% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 15%;
+
+    --primary: 240 10% 15%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 240 10% 15%;
+
+    --muted: 0 0% 94%;
+    --muted-foreground: 240 5% 50%;
+
+    --accent: 280 85% 55%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 10% 88%;
+    --input: 240 10% 88%;
+
+    --radius: 0.5rem;
+
+    /* Custom tokens for mathematical theme */
+    --math-primary: 240 10% 15%;
+    --math-accent: 280 85% 55%;
+    --math-muted: 240 5% 65%;
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Frosted glass effects */
+    --glass-bg: 255 255 255;
+    --glass-bg-dark: 0 0 0;
+  }
+
+  .dark {
+    --background: 240 10% 10%;
+    --foreground: 0 0% 95%;
+
+    --card: 240 8% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 240 8% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 0 0% 95%;
+    --primary-foreground: 240 10% 15%;
+
+    --secondary: 240 8% 18%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 240 8% 18%;
+    --muted-foreground: 240 5% 60%;
+
+    --accent: 280 85% 60%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 8% 20%;
+    --input: 240 8% 20%;
+  }
+}
+
+/* Performance optimizations */
+.performance-optimized {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* Smooth scrolling performance */
+* {
+  scroll-behavior: smooth;
+}
+
+/* GPU acceleration for transforms */
+.will-change-transform {
+  will-change: transform;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /* Math notation styling */
+  .math-function {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-style: italic;
+  }
+
+  /* Map transition animation */
+  @keyframes zoomIntoFx {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(15);
+      opacity: 0;
+    }
+  }
+
+  .animate-zoom-into-fx {
+    animation: zoomIntoFx 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Frosted glass utility classes */
+  .frosted-glass {
+    @apply backdrop-blur-md bg-white/10 dark:bg-black/20 border border-white/20;
+  }
+
+  .frosted-glass-purple {
+    @apply backdrop-blur-md bg-purple-500/20 border border-purple-400/30 text-white;
+  }
+
+  .frosted-glass-button {
+    @apply backdrop-blur-md bg-white/10 dark:bg-black/30 border border-white/20 transition-all duration-200 shadow-none;
+  }
+
+  .frosted-glass-button:autofill,
+  .frosted-glass-button:-webkit-autofill,
+  .frosted-glass-button:-webkit-autofill:hover,
+  .frosted-glass-button:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+    -webkit-text-fill-color: inherit !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Gradient blur for bottom edges */
+  .blur-gradient-bottom {
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  }
+
+  /* Slide in animation */
+  @keyframes slide-in-from-top {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-in-from-top {
+    animation: slide-in-from-top 0.3s ease-out;
+  }
+
+  /* Remove search input decorations */
+  input[type="search"]::-webkit-search-decoration,
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-results-button,
+  input[type="search"]::-webkit-search-results-decoration {
+    display: none;
+  }
+
+  /* Stable focus styles for frosted glass inputs */
+  .frosted-glass-button:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .frosted-glass-button:focus {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Hide Leaflet attribution (watermark) */
+  .leaflet-control-attribution {
+    display: none !important;
+  }
+
+  /* Hide scrollbar for category filter and other horizontal scrolls */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari, Opera */
+  }
+
+  /* ---- Leaflet fixes: remove tile "grid" lines & match sea gray ---- */
+  .leaflet-container,
+  .leaflet-pane,
+  .leaflet-tile-pane,
+  .leaflet-layer {
+    background: #1f2124 !important; /* sea gray - prevents white flash & hides seams while loading */
+  }
+
+  .leaflet-container .leaflet-tile {
+    border: 0 !important;
+    outline: 1px solid transparent; /* masks subpixel gaps that can appear as grid lines */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .leaflet-container .leaflet-tile.leaflet-tile-loaded {
+    opacity: 1;
+  }
+
+  .leaflet-container {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Smooth zoom transitions */
+  .leaflet-zoom-animated {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Smooth marker transitions */
+  .leaflet-marker-icon,
+  .leaflet-marker-shadow {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out;
+  }
+  /* ------------------------------------------------------------------ */
+
+  /* User location marker with pulsating animation */
+  .user-location-marker {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    animation: location-pulse 1s ease-out infinite;
+  }
+
+  @keyframes location-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    }
+    100% {
+      box-shadow: 0 0 0 12px rgba(255, 255, 255, 0);
+    }
+  }
+}

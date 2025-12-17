@@ -1,0 +1,13 @@
+{
+  "name": "wheresthefx-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "fetch": "node fetch-dataset.js",
+    "process": "node process-posts.js",
+    "test": "node test-connection.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0"
+  }
+}
