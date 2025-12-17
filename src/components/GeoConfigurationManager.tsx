@@ -25,12 +25,6 @@ export function GeoConfigurationManager() {
   const { toast } = useToast();
   const [keywords, setKeywords] = useState<GeoConfig[]>([]);
   const [bounds, setBounds] = useState<GeoConfig[]>([]);
-
-  const { ExportButton, ImportButton } = useJsonExportImport({
-    tableName: 'geo_configuration',
-    displayName: 'geo configuration',
-    onImportComplete: loadGeoConfig
-  });
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isKeywordsOpen, setIsKeywordsOpen] = useState(true);
@@ -40,10 +34,6 @@ export function GeoConfigurationManager() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editedBounds, setEditedBounds] = useState<Record<string, string>>({});
   const [isSavingBounds, setIsSavingBounds] = useState(false);
-
-  useEffect(() => {
-    fetchConfiguration();
-  }, []);
 
   const fetchConfiguration = async () => {
     try {
@@ -77,6 +67,16 @@ export function GeoConfigurationManager() {
       setIsLoading(false);
     }
   };
+
+  const { ExportButton, ImportButton } = useJsonExportImport({
+    tableName: 'geo_configuration',
+    displayName: 'geo configuration',
+    onImportComplete: fetchConfiguration
+  });
+
+  useEffect(() => {
+    fetchConfiguration();
+  }, []);
 
   const toggleKeyword = async (id: string, currentStatus: boolean) => {
     try {
