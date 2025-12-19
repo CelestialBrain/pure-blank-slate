@@ -7,7 +7,7 @@
  * @version 2.0.0
  */
 
-export const PROMPT_VERSION = '2.3.0'; // Added artist/lineup and sub-event detection
+export const PROMPT_VERSION = '2.4.0'; // Added retrospective detection + improved date/venue inference
 
 // ============================================================
 // SHARED CONTEXT HELPERS
@@ -49,6 +49,26 @@ export const promptSections = {
    - If time not visible → eventTime: null
    - If price not visible → price: null
    - If venue not visible → locationName: null
+
+=== RETROSPECTIVE POST DETECTION (CRITICAL - v2.4) ===
+🚨 REJECT these as NOT events (isEvent: false):
+- "Thank you for coming" / "Salamat sa lahat" / "See you at the next one"
+- "What a night!" / "Last night was amazing" / "That was incredible"
+- "Still riding the high from..." / "Pop-up was a blast"
+- Caption in PAST TENSE describing what happened (not announcing)
+- "We had so much fun" / "Until next time!"
+
+These are POST-EVENT RECAPS, not future event announcements.
+→ Set isEvent: false
+→ rejectionReason: "post_event_recap"
+
+=== GENERIC PROMO DETECTION (NEW - v2.4) ===
+🚨 REJECT these as NOT events:
+- "Hold your celebrations at [venue]" → generic promo, no specific event
+- "Visit us anytime!" / "Come check us out"
+- No specific date, time, or event name
+→ Set isEvent: false
+→ rejectionReason: "generic_promo"
 
 === TITLE EXTRACTION RULES ===
 - PREFER the specific "Market Name" or "Artist/Event Name" from stylized text.
@@ -185,17 +205,41 @@ VALIDATION:
      */
     notAnEventCriteria: (today: string) => `
 === NOT AN EVENT (isEvent: false) ===
-- Operating hours: "6PM — Tues to Sat", "Open Mon-Fri", "Daily 10AM-10PM"
-- Generic recurring: "Every Friday" without specific date
-- Promo language: "Visit us", "Come check out", "Be in the loop"
-- Rate sheets/menus: price lists for services, not event tickets
-- Teasers: "Coming soon", "TBA", "Watch this space"
-- Past events: 
-  * If single day: date strictly before ${today}
-  * If multi-day: eventEndDate strictly before ${today}
-  * Keywords: "throwback", "last night was", "thank you for coming" (without future dates)
-- Giveaways/contests: "GIVEAWAY", "win a", "tag 2 friends"
-- Vendor calls: "calling all vendors", "booth rental", "vendor applications"
+
+1. RETROSPECTIVE/RECAP POSTS (rejectionReason: "post_event_recap"):
+   - "Thank you for coming" / "Salamat sa lahat"
+   - "What a night!" / "Last night was amazing"
+   - "Still riding the high from..." / "Pop-up was a blast"
+   - "We had so much fun" / "Until next time!"
+   - Caption describes PAST event without future dates
+
+2. GENERIC PROMOS (rejectionReason: "generic_promo"):
+   - "Hold your celebrations at [venue]"
+   - "Visit us anytime!" / "Come check us out"
+   - No specific date, time, or event name
+   - General venue promotion without event details
+
+3. OPERATING HOURS (rejectionReason: "operating_hours"):
+   - "6PM — Tues to Sat", "Open Mon-Fri", "Daily 10AM-10PM"
+
+4. RECURRING WITHOUT DATE (rejectionReason: "generic_recurring"):
+   - "Every Friday" without specific date
+
+5. RATE SHEETS/MENUS (rejectionReason: "menu_price_list"):
+   - Price lists for services, not event tickets
+
+6. TEASERS (rejectionReason: "teaser"):
+   - "Coming soon", "TBA", "Watch this space"
+
+7. PAST EVENTS (rejectionReason: "past_event"):
+   - Single day: date strictly before ${today}
+   - Multi-day: eventEndDate strictly before ${today}
+
+8. GIVEAWAYS (rejectionReason: "giveaway"):
+   - "GIVEAWAY", "win a", "tag 2 friends"
+
+9. VENDOR CALLS (rejectionReason: "vendor_call"):
+   - "calling all vendors", "booth rental"
 `,
 
     /**
@@ -393,6 +437,7 @@ ${promptSections.confidenceScoring}
   "isFree": boolean or null,
   "signupUrl": "URL or null",
   "isEvent": boolean,
+  "rejectionReason": "post_event_recap|generic_promo|operating_hours|past_event|teaser|giveaway|vendor_call or null",
   "confidence": 0.0-1.0,
   "reasoning": "brief explanation",
   "category": "nightlife|music|art_culture|markets|food|workshops|community|comedy|other",
@@ -403,7 +448,7 @@ ${promptSections.confidenceScoring}
   "originalDate": "YYYY-MM-DD or null",
   "reason": "string or null",
   "availabilityStatus": "available|sold_out|waitlist|limited|few_left or null",
-  "locationStatus": "confirmed|tba|secret|dm_for_details or null",
+  "locationStatus": "confirmed|tba|secret|dm_for_details|inferred or null",
   "artists": ["string"],
   "subEvents": [
     {
