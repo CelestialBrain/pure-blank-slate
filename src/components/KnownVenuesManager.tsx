@@ -88,7 +88,7 @@ export const KnownVenuesManager = () => {
     displayName: 'venues',
     onImportComplete: () => queryClient.invalidateQueries({ queryKey: ['known-venues'] })
   });
-  
+
   // Scroll position preservation
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const savedScrollPosition = useRef<number>(0);
@@ -264,235 +264,240 @@ export const KnownVenuesManager = () => {
   });
 
   if (isLoading) {
-    return <div className="p-4 text-muted-foreground">Loading venues...</div>;
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      </div>
+    );
   }
 
   return (
-    <Card>
-      <CardHeader className="p-4 md:p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Known Venues ({venues?.length || 0})
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Venues used by AI extraction for location matching
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-1" />
-              Export
-            </Button>
-            <ViewJsonButton />
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Venue
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{editingId ? "Edit Venue" : "Add New Venue"}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold">Known Venues</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Venues used by AI extraction for location matching
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-1" />
+            Export
+          </Button>
+          <ViewJsonButton />
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add Venue
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingId ? "Edit Venue" : "Add New Venue"}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label>Name *</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., The Victor"
+                  />
+                </div>
+                <div>
+                  <Label>Aliases (comma-separated)</Label>
+                  <Input
+                    value={formData.aliases}
+                    onChange={(e) => setFormData({ ...formData, aliases: e.target.value })}
+                    placeholder="e.g., Victor Gallery, The Victor Space"
+                  />
+                </div>
+                <div>
+                  <Label>Address</Label>
+                  <Input
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="e.g., 123 Main St"
+                  />
+                </div>
+                <div>
+                  <Label>City</Label>
+                  <Input
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder="e.g., Pasig"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label>Name *</Label>
+                    <Label>Latitude</Label>
                     <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g., The Victor"
+                      type="number"
+                      step="any"
+                      value={formData.lat}
+                      onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
+                      placeholder="14.5547"
                     />
                   </div>
                   <div>
-                    <Label>Aliases (comma-separated)</Label>
+                    <Label>Longitude</Label>
                     <Input
-                      value={formData.aliases}
-                      onChange={(e) => setFormData({ ...formData, aliases: e.target.value })}
-                      placeholder="e.g., Victor Gallery, The Victor Space"
+                      type="number"
+                      step="any"
+                      value={formData.lng}
+                      onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
+                      placeholder="121.0244"
                     />
-                  </div>
-                  <div>
-                    <Label>Address</Label>
-                    <Input
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      placeholder="e.g., 123 Main St"
-                    />
-                  </div>
-                  <div>
-                    <Label>City</Label>
-                    <Input
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      placeholder="e.g., Pasig"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label>Latitude</Label>
-                      <Input
-                        type="number"
-                        step="any"
-                        value={formData.lat}
-                        onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                        placeholder="14.5547"
-                      />
-                    </div>
-                    <div>
-                      <Label>Longitude</Label>
-                      <Input
-                        type="number"
-                        step="any"
-                        value={formData.lng}
-                        onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                        placeholder="121.0244"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Instagram Handle</Label>
-                    <Input
-                      value={formData.instagram_handle}
-                      onChange={(e) => setFormData({ ...formData, instagram_handle: e.target.value })}
-                      placeholder="e.g., @thevictor_ph"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={resetForm}>Cancel</Button>
-                    <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
-                      {editingId ? "Update" : "Create"}
-                    </Button>
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
+                <div>
+                  <Label>Instagram Handle</Label>
+                  <Input
+                    value={formData.instagram_handle}
+                    onChange={(e) => setFormData({ ...formData, instagram_handle: e.target.value })}
+                    placeholder="e.g., @thevictor_ph"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button variant="outline" onClick={resetForm}>Cancel</Button>
+                  <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
+                    {editingId ? "Update" : "Create"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+      <Card className="frosted-glass border-border/50">
+        <CardHeader className="p-4 border-b border-border/30">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search venues by name, city, alias..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-background/50"
+            />
           </div>
-        </div>
-        <div className="mt-4 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search venues by name, city, alias..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 md:p-6 pt-0">
-        <div ref={tableContainerRef} className="rounded-md border overflow-x-auto max-h-[600px] overflow-y-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Aliases</TableHead>
-                <TableHead>City</TableHead>
-                <TableHead>Hours</TableHead>
-                <TableHead>Coordinates</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredVenues?.map((venue) => (
-                <TableRow key={venue.id}>
-                  <TableCell className="font-medium">
-                    <div>{venue.name}</div>
-                    {venue.instagram_handle && (
-                      <div className="text-xs text-muted-foreground">{venue.instagram_handle}</div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {venue.aliases?.slice(0, 2).map((alias, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">{alias}</Badge>
-                      ))}
-                      {(venue.aliases?.length || 0) > 2 && (
-                        <Badge variant="outline" className="text-xs">+{venue.aliases!.length - 2}</Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{venue.city || "-"}</TableCell>
-                  <TableCell>
-                    {venue.operating_hours ? (
-                      <Badge variant="secondary" className="text-xs flex items-center gap-1 w-fit">
-                        <Clock className="h-3 w-3" />
-                        Set
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {venue.lat && venue.lng ? `${venue.lat.toFixed(4)}, ${venue.lng.toFixed(4)}` : "-"}
-                  </TableCell>
-                  <TableCell>
-                    {venue.learned_from_corrections ? (
-                      <Badge variant="secondary" className="text-xs">Learned</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs">Seeded</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => {
-                          setEditingHoursVenue(venue);
-                          setHoursEditorOpen(true);
-                        }}
-                        title="Edit Hours"
-                      >
-                        <Clock className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => startEdit(venue)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm(`Delete "${venue.name}"?`)) {
-                            deleteMutation.mutate(venue.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredVenues?.length === 0 && (
+        </CardHeader>
+        <CardContent className="p-4 md:p-6 pt-0">
+          <div ref={tableContainerRef} className="rounded-md border overflow-x-auto max-h-[600px] overflow-y-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    {searchQuery ? "No venues match your search" : "No venues yet"}
-                  </TableCell>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Aliases</TableHead>
+                  <TableHead>City</TableHead>
+                  <TableHead>Hours</TableHead>
+                  <TableHead>Coordinates</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
+              </TableHeader>
+              <TableBody>
+                {filteredVenues?.map((venue) => (
+                  <TableRow key={venue.id}>
+                    <TableCell className="font-medium">
+                      <div>{venue.name}</div>
+                      {venue.instagram_handle && (
+                        <div className="text-xs text-muted-foreground">{venue.instagram_handle}</div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {venue.aliases?.slice(0, 2).map((alias, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">{alias}</Badge>
+                        ))}
+                        {(venue.aliases?.length || 0) > 2 && (
+                          <Badge variant="outline" className="text-xs">+{venue.aliases!.length - 2}</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{venue.city || "-"}</TableCell>
+                    <TableCell>
+                      {venue.operating_hours ? (
+                        <Badge variant="secondary" className="text-xs flex items-center gap-1 w-fit">
+                          <Clock className="h-3 w-3" />
+                          Set
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {venue.lat && venue.lng ? `${venue.lat.toFixed(4)}, ${venue.lng.toFixed(4)}` : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {venue.learned_from_corrections ? (
+                        <Badge variant="secondary" className="text-xs">Learned</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">Seeded</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingHoursVenue(venue);
+                            setHoursEditorOpen(true);
+                          }}
+                          title="Edit Hours"
+                        >
+                          <Clock className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => startEdit(venue)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(`Delete "${venue.name}"?`)) {
+                              deleteMutation.mutate(venue.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredVenues?.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      {searchQuery ? "No venues match your search" : "No venues yet"}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
 
-      {editingHoursVenue && (
-        <VenueHoursEditor
-          open={hoursEditorOpen}
-          onOpenChange={(open) => {
-            setHoursEditorOpen(open);
-            if (!open) setEditingHoursVenue(null);
-          }}
-          venueName={editingHoursVenue.name}
-          currentHours={editingHoursVenue.operating_hours}
-          onSave={(hours) => {
-            updateHoursMutation.mutate({ id: editingHoursVenue.id, hours });
-          }}
-          isSaving={updateHoursMutation.isPending}
-        />
-      )}
-    </Card>
+        {
+          editingHoursVenue && (
+            <VenueHoursEditor
+              open={hoursEditorOpen}
+              onOpenChange={(open) => {
+                setHoursEditorOpen(open);
+                if (!open) setEditingHoursVenue(null);
+              }}
+              venueName={editingHoursVenue.name}
+              currentHours={editingHoursVenue.operating_hours}
+              onSave={(hours) => {
+                updateHoursMutation.mutate({ id: editingHoursVenue.id, hours });
+              }}
+              isSaving={updateHoursMutation.isPending}
+            />
+          )
+        }
+      </Card >
+    </div >
   );
 };

@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, Loader, CheckCircle, Trash, ChevronLeft, ChevronRight, CheckCheck, AlertTriangle, XCircle, Download } from "lucide-react";
+import { AlertCircle, Loader, CheckCircle, Trash, ChevronLeft, ChevronRight, CheckCheck, AlertTriangle, XCircle, Download, ChevronDown, Eye, FileText, Brain, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PostWithEventEditor } from "./PostWithEventEditor";
 import { ClientOCRProcessor } from "./ClientOCRProcessor";
 import {
@@ -77,6 +78,7 @@ interface Post {
   recurrence_pattern: string | null;
   urgency_score: number | null;
   sub_events: Json | null;
+  artists: Json | null;
 }
 
 const extractionMethodLabels: Record<string, { label: string; icon: string }> = {
@@ -98,10 +100,10 @@ const calculatePriority = (post: Post): number => {
   if (post.location_name) score += 20;
   if (post.ai_confidence) score += post.ai_confidence * 10;
   if (post.location_lat && post.location_lng) score += 10;
-  
+
   // Reduce priority for posts with OCR errors
   if (post.ocr_error_count > 0) score -= post.ocr_error_count * 5;
-  
+
   return Math.max(0, Math.min(100, score));
 };
 
@@ -129,7 +131,7 @@ export function ConsolidatedReviewQueue() {
     setIsExporting(true);
     try {
       const today = new Date().toISOString().split('T')[0];
-      
+
       // Fetch ALL posts for current tier (bypass pagination)
       let query = supabase
         .from("instagram_posts")
@@ -148,13 +150,13 @@ export function ConsolidatedReviewQueue() {
         .eq("review_tier", tierTab);
 
       const { data, error } = await query.order("created_at", { ascending: false });
-      
+
       if (error) throw error;
 
       // Filter past events if toggle is on
       let filteredData = data || [];
       if (hidePastEvents) {
-        filteredData = filteredData.filter(post => 
+        filteredData = filteredData.filter(post =>
           !post.event_date || post.event_date >= today
         );
       }
@@ -166,7 +168,7 @@ export function ConsolidatedReviewQueue() {
         totalPosts: filteredData.length,
         hidePastEvents,
         statistics: {
-          avgConfidence: filteredData.length > 0 
+          avgConfidence: filteredData.length > 0
             ? (filteredData.reduce((acc, p) => acc + (p.ai_confidence || 0), 0) / filteredData.length).toFixed(3)
             : 0,
           missingFields: {
@@ -227,7 +229,7 @@ export function ConsolidatedReviewQueue() {
     setIsExporting(true);
     try {
       const today = new Date().toISOString().split('T')[0];
-      
+
       let query = supabase
         .from("instagram_posts")
         .select(`
@@ -244,12 +246,12 @@ export function ConsolidatedReviewQueue() {
         .eq("review_tier", tierTab);
 
       const { data, error } = await query.order("created_at", { ascending: false });
-      
+
       if (error) throw error;
 
       let filteredData = data || [];
       if (hidePastEvents) {
-        filteredData = filteredData.filter(post => 
+        filteredData = filteredData.filter(post =>
           !post.event_date || post.event_date >= today
         );
       }
@@ -312,17 +314,17 @@ export function ConsolidatedReviewQueue() {
     queryKey: ["review-tier-counts", hidePastEvents],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
-      
+
       let query = supabase
         .from("instagram_posts")
         .select("review_tier, event_date")
         .eq("is_event", true)
         .eq("needs_review", true);
-      
+
       const { data, error } = await query;
-      
+
       if (error) throw error;
-      
+
       const counts = { ready: 0, quick: 0, full: 0, rejected: 0 };
       data?.forEach(post => {
         // Filter past events if toggle is on
@@ -352,14 +354,14 @@ export function ConsolidatedReviewQueue() {
         .eq("review_tier", tierTab);
 
       const { data, error } = await query.order("created_at", { ascending: false });
-      
+
       if (error) throw error;
 
       // Filter past events if toggle is on
       const today = new Date().toISOString().split('T')[0];
       let filteredData = data || [];
       if (hidePastEvents) {
-        filteredData = filteredData.filter(post => 
+        filteredData = filteredData.filter(post =>
           !post.event_date || post.event_date >= today
         );
       }
@@ -399,7 +401,7 @@ export function ConsolidatedReviewQueue() {
           ocr_last_attempt_at: null
         })
         .eq("id", postId);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -413,7 +415,7 @@ export function ConsolidatedReviewQueue() {
   const batchPublishMutation = useMutation({
     mutationFn: async () => {
       const today = new Date().toISOString().split('T')[0];
-      
+
       // Get all ready tier posts with future dates
       const { data: readyPosts, error: fetchError } = await supabase
         .from("instagram_posts")
@@ -421,12 +423,12 @@ export function ConsolidatedReviewQueue() {
         .eq("review_tier", "ready")
         .eq("is_event", true)
         .gte("event_date", today);
-      
+
       if (fetchError) throw fetchError;
       if (!readyPosts || readyPosts.length === 0) {
         throw new Error("No posts to publish");
       }
-      
+
       // Publish each post
       let published = 0;
       for (const post of readyPosts) {
@@ -435,7 +437,7 @@ export function ConsolidatedReviewQueue() {
         });
         if (!error) published++;
       }
-      
+
       return { published, total: readyPosts.length };
     },
     onSuccess: (data) => {
@@ -450,10 +452,10 @@ export function ConsolidatedReviewQueue() {
 
   // Reject with learning mutation
   const rejectMutation = useMutation({
-    mutationFn: async ({ post, reason, fields, notes }: { 
-      post: Post; 
-      reason: string; 
-      fields: Record<string, boolean>; 
+    mutationFn: async ({ post, reason, fields, notes }: {
+      post: Post;
+      reason: string;
+      fields: Record<string, boolean>;
       notes: string;
     }) => {
       // 1. Log rejection
@@ -485,7 +487,7 @@ export function ConsolidatedReviewQueue() {
           const { error: correctionError } = await supabase
             .from("extraction_corrections")
             .insert(corrections);
-          
+
           if (correctionError) throw correctionError;
         }
       }
@@ -554,7 +556,7 @@ export function ConsolidatedReviewQueue() {
 
   const ValidationWarnings = ({ warnings }: { warnings: string[] | null }) => {
     if (!warnings || warnings.length === 0) return null;
-    
+
     return (
       <div className="flex flex-wrap gap-1 mt-2">
         {warnings.map((warning, i) => (
@@ -563,6 +565,120 @@ export function ConsolidatedReviewQueue() {
           </Badge>
         ))}
       </div>
+    );
+  };
+
+  // Source Data Panel - shows raw caption, OCR text, and AI reasoning
+  const SourceDataPanel = ({ post }: { post: Post }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mt-3">
+        <CollapsibleTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-between text-xs text-muted-foreground hover:text-foreground p-2 h-8 bg-muted/30 hover:bg-muted/50"
+          >
+            <span className="flex items-center gap-2">
+              <Eye className="w-3 h-3" />
+              View Source Data (Caption, OCR, AI Reasoning)
+            </span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2 space-y-3">
+          {/* Caption */}
+          <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="w-3.5 h-3.5 text-blue-500" />
+              <span className="text-xs font-semibold text-blue-500">Original Caption</span>
+              {post.caption && (
+                <Badge variant="outline" className="text-[10px] h-4">
+                  {post.caption.length} chars
+                </Badge>
+              )}
+            </div>
+            <pre className="text-xs whitespace-pre-wrap break-words max-h-40 overflow-y-auto bg-background/50 p-2 rounded font-mono">
+              {post.caption || <span className="text-muted-foreground italic">No caption</span>}
+            </pre>
+          </div>
+
+          {/* OCR Text */}
+          {(post.ocr_text || post.ocr_processed) && (
+            <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Eye className="w-3.5 h-3.5 text-purple-500" />
+                <span className="text-xs font-semibold text-purple-500">OCR Extracted Text</span>
+                {post.ocr_confidence && (
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] h-4 ${post.ocr_confidence > 0.8 ? 'border-green-500 text-green-600' :
+                      post.ocr_confidence > 0.5 ? 'border-yellow-500 text-yellow-600' :
+                        'border-red-500 text-red-600'
+                      }`}
+                  >
+                    {(post.ocr_confidence * 100).toFixed(0)}% conf
+                  </Badge>
+                )}
+              </div>
+              <pre className="text-xs whitespace-pre-wrap break-words max-h-40 overflow-y-auto bg-background/50 p-2 rounded font-mono">
+                {post.ocr_text || <span className="text-muted-foreground italic">No OCR text extracted</span>}
+              </pre>
+            </div>
+          )}
+
+          {/* AI Reasoning */}
+          {post.ai_reasoning && (
+            <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Brain className="w-3.5 h-3.5 text-accent" />
+                <span className="text-xs font-semibold text-accent">AI Reasoning</span>
+                {post.ai_confidence && (
+                  <Badge
+                    className={`text-[10px] h-4 ${post.ai_confidence > 0.8 ? 'bg-green-500' :
+                      post.ai_confidence > 0.5 ? 'bg-yellow-500' :
+                        'bg-red-500'
+                      }`}
+                  >
+                    {(post.ai_confidence * 100).toFixed(0)}% confident
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground whitespace-pre-wrap bg-background/50 p-2 rounded">
+                {post.ai_reasoning}
+              </p>
+            </div>
+          )}
+
+          {/* Extracted Fields Summary */}
+          <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle className="w-3.5 h-3.5 text-accent" />
+              <span className="text-xs font-semibold text-accent">Extracted Fields</span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+              <div><span className="text-muted-foreground">Title:</span> <span className="font-medium">{post.event_title || '—'}</span></div>
+              <div><span className="text-muted-foreground">Date:</span> <span className="font-medium">{post.event_date || '—'}</span></div>
+              <div><span className="text-muted-foreground">Time:</span> <span className="font-medium">{post.event_time || '—'}</span></div>
+              <div><span className="text-muted-foreground">Venue:</span> <span className="font-medium">{post.location_name || '—'}</span></div>
+              <div><span className="text-muted-foreground">Category:</span> <span className="font-medium">{post.category || '—'}</span></div>
+              <div><span className="text-muted-foreground">Price:</span> <span className="font-medium">{post.is_free ? 'Free' : post.price ? `₱${post.price}` : '—'}</span></div>
+            </div>
+          </div>
+
+          {/* Link to source */}
+          <a
+            href={post.post_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
+          >
+            <ExternalLink className="w-3 h-3" />
+            View original Instagram post
+          </a>
+        </CollapsibleContent>
+      </Collapsible>
     );
   };
 
@@ -593,27 +709,26 @@ export function ConsolidatedReviewQueue() {
       )}
 
       {/* Main Review Queue with Tier Tabs */}
-      <Card>
-        <CardHeader className="p-4 md:p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h2 className="text-lg md:text-xl font-bold">Review Queue</h2>
-              <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                Tiered review system - Ready posts can be batch published
-              </p>
-            </div>
-            {tierTab === 'ready' && (tierCounts?.ready || 0) > 0 && (
-              <Button 
-                onClick={() => batchPublishMutation.mutate()}
-                disabled={batchPublishMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <CheckCheck className="w-4 h-4 mr-2" />
-                {batchPublishMutation.isPending ? "Publishing..." : `Publish All Ready (${tierCounts?.ready || 0})`}
-              </Button>
-            )}
-          </div>
-        </CardHeader>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold">Review Queue</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Tiered review system - Ready posts can be batch published
+          </p>
+        </div>
+        {tierTab === 'ready' && (tierCounts?.ready || 0) > 0 && (
+          <Button
+            onClick={() => batchPublishMutation.mutate()}
+            disabled={batchPublishMutation.isPending}
+            className="bg-green-600 hover:bg-green-700 frosted-glass-button"
+          >
+            <CheckCheck className="w-4 h-4 mr-2" />
+            {batchPublishMutation.isPending ? "Publishing..." : `Publish All Ready (${tierCounts?.ready || 0})`}
+          </Button>
+        )}
+      </div>
+
+      <div className="frosted-glass border border-border/50 rounded-xl p-4 md:p-6 bg-white/50 dark:bg-black/20">
         <CardContent className="p-4 md:p-6 pt-0">
           <Tabs value={tierTab} onValueChange={(v) => {
             setTierTab(v as TierTab);
@@ -682,9 +797,9 @@ export function ConsolidatedReviewQueue() {
                     Showing {Math.min(currentPage * ITEMS_PER_PAGE + 1, allPosts?.length || 0)}-{Math.min((currentPage + 1) * ITEMS_PER_PAGE, allPosts?.length || 0)} of {allPosts?.length || 0}
                   </p>
                   <div className="flex items-center gap-2">
-                    <Checkbox 
-                      id="hidePast" 
-                      checked={hidePastEvents} 
+                    <Checkbox
+                      id="hidePast"
+                      checked={hidePastEvents}
                       onCheckedChange={(checked) => {
                         setHidePastEvents(checked as boolean);
                         setCurrentPage(0);
@@ -699,8 +814,8 @@ export function ConsolidatedReviewQueue() {
                   {/* Export Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
                         disabled={isExporting || !allPosts?.length}
                       >
@@ -720,9 +835,9 @@ export function ConsolidatedReviewQueue() {
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     disabled={currentPage === 0}
                     onClick={() => setCurrentPage(p => p - 1)}
                     className="flex-1 md:flex-initial"
@@ -730,8 +845,8 @@ export function ConsolidatedReviewQueue() {
                     <ChevronLeft className="w-4 h-4 md:mr-1" />
                     <span className="hidden md:inline">Previous</span>
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
                     disabled={currentPage >= totalPages - 1}
                     onClick={() => setCurrentPage(p => p + 1)}
@@ -745,58 +860,89 @@ export function ConsolidatedReviewQueue() {
 
               {/* Posts list */}
               {paginatedPosts && paginatedPosts.length > 0 ? (
-                <div className="space-y-3 md:space-y-4">
+                <div className="space-y-4">
                   {paginatedPosts.map((post: any) => (
-                    <Card key={post.id}>
+                    <Card key={post.id} className="frosted-glass overflow-hidden border-border/50 hover:border-accent/30 transition-colors">
                       <CardContent className="p-4 md:p-6">
-                        <div className="space-y-3 md:space-y-4">
-                          {/* Header with badges */}
-                          <div className="flex items-center justify-between flex-wrap gap-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <TierBadge tier={post.review_tier} />
-                              {post.instagram_account && (
-                                <Badge variant="outline" className="text-xs">@{post.instagram_account.username}</Badge>
-                              )}
-                              {post.extraction_method && extractionMethodLabels[post.extraction_method] && (
-                                <Badge variant="outline" className="text-xs">
-                                  {extractionMethodLabels[post.extraction_method].icon} {extractionMethodLabels[post.extraction_method].label}
-                                </Badge>
-                              )}
-                              {post.category && (
-                                <Badge 
-                                  style={{ 
-                                    backgroundColor: CATEGORY_COLORS[post.category] || '#9E9E9E',
-                                    color: post.category === 'food' ? '#333' : '#fff'
-                                  }}
-                                  className="text-xs"
-                                >
-                                  {CATEGORY_LABELS[post.category] || post.category}
-                                </Badge>
-                              )}
-                              {post.ai_confidence && (
-                                <Badge variant="outline" className="text-xs">
-                                  AI: {(post.ai_confidence * 100).toFixed(0)}%
-                                </Badge>
-                              )}
-                              {post.is_duplicate && (
-                                <Badge variant="destructive" className="text-xs">Duplicate</Badge>
-                              )}
-                              {post.location_status === 'outside_service_area' && (
-                                <Badge className="text-xs bg-purple-600 text-white">🌍 Outside NCR</Badge>
-                              )}
-                              {(post.validation_warnings?.includes('venue_outside_ncr') || 
-                                post.validation_warnings?.includes('coordinates_outside_ncr')) && 
-                                post.location_status !== 'outside_service_area' && (
-                                <Badge className="text-xs bg-purple-600 text-white">🌍 Outside NCR</Badge>
-                              )}
-                              <PriceDisplay 
-                                isFree={post.is_free}
-                                price={post.price}
-                                priceMin={post.price_min}
-                                priceMax={post.price_max}
-                                priceNotes={post.price_notes}
-                                size="sm"
+                        <div className="space-y-4">
+                          {/* Header row with image preview and badges */}
+                          <div className="flex gap-4">
+                            {/* Thumbnail */}
+                            <a
+                              href={post.post_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-muted group relative"
+                            >
+                              <img
+                                src={post.stored_image_url || post.image_url}
+                                alt=""
+                                className="w-full h-full object-cover transition-transform group-hover:scale-110"
                               />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                <ExternalLink className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </a>
+
+                            {/* Badges and info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <TierBadge tier={post.review_tier} />
+                                {post.instagram_account && (
+                                  <Badge variant="outline" className="text-xs">@{post.instagram_account.username}</Badge>
+                                )}
+                                {post.extraction_method && extractionMethodLabels[post.extraction_method] && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {extractionMethodLabels[post.extraction_method].icon} {extractionMethodLabels[post.extraction_method].label}
+                                  </Badge>
+                                )}
+                                {post.category && (
+                                  <Badge
+                                    style={{
+                                      backgroundColor: CATEGORY_COLORS[post.category] || '#9E9E9E',
+                                      color: post.category === 'food' ? '#333' : '#fff'
+                                    }}
+                                    className="text-xs"
+                                  >
+                                    {CATEGORY_LABELS[post.category] || post.category}
+                                  </Badge>
+                                )}
+                                {post.ai_confidence && (
+                                  <Badge
+                                    className={`text-xs ${post.ai_confidence > 0.8 ? 'bg-green-500/20 text-green-600 border-green-500/30' :
+                                      post.ai_confidence > 0.5 ? 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30' :
+                                        'bg-red-500/20 text-red-600 border-red-500/30'
+                                      }`}
+                                    variant="outline"
+                                  >
+                                    AI: {(post.ai_confidence * 100).toFixed(0)}%
+                                  </Badge>
+                                )}
+                                {post.is_duplicate && (
+                                  <Badge variant="destructive" className="text-xs">Duplicate</Badge>
+                                )}
+                                {(post.location_status === 'outside_service_area' ||
+                                  post.validation_warnings?.includes('venue_outside_ncr') ||
+                                  post.validation_warnings?.includes('coordinates_outside_ncr')) && (
+                                    <Badge className="text-xs bg-purple-600 text-white">🌍 Outside NCR</Badge>
+                                  )}
+                                <PriceDisplay
+                                  isFree={post.is_free}
+                                  price={post.price}
+                                  priceMin={post.price_min}
+                                  priceMax={post.price_max}
+                                  priceNotes={post.price_notes}
+                                  size="sm"
+                                />
+                              </div>
+
+                              {/* Quick info line */}
+                              <p className="text-sm font-medium mt-2 truncate">
+                                {post.event_title || <span className="text-muted-foreground italic">No title extracted</span>}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {post.event_date || '—'} {post.event_time && `@ ${post.event_time}`} • {post.location_name || 'No venue'}
+                              </p>
                             </div>
                           </div>
 
@@ -805,9 +951,12 @@ export function ConsolidatedReviewQueue() {
 
                           {/* Sub-Events Display for multi-event posts */}
                           <SubEventsDisplay subEvents={post.sub_events} />
-                          
+
                           {/* Performers Display for events with featured artists */}
                           <PerformersDisplay subEvents={post.sub_events} />
+
+                          {/* Source Data Panel - NEW */}
+                          <SourceDataPanel post={post} />
 
                           {/* Completeness meter */}
                           <div className="space-y-1">
@@ -827,9 +976,9 @@ export function ConsolidatedReviewQueue() {
                               {post.ocr_last_error && (
                                 <p className="text-xs text-muted-foreground">{post.ocr_last_error}</p>
                               )}
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
+                              <Button
+                                size="sm"
+                                variant="outline"
                                 onClick={() => forceReprocessMutation.mutate(post.id)}
                                 disabled={forceReprocessMutation.isPending}
                                 className="w-full md:w-auto"
@@ -863,7 +1012,7 @@ export function ConsolidatedReviewQueue() {
             </TabsContent>
           </Tabs>
         </CardContent>
-      </Card>
+      </div>
 
       {/* Rejection Dialog */}
       <AlertDialog open={!!postToReject} onOpenChange={(open) => !open && setPostToReject(null)}>
@@ -893,11 +1042,11 @@ export function ConsolidatedReviewQueue() {
                 <div className="space-y-2">
                   {['event_title', 'event_date', 'event_time', 'location_name', 'location_address'].map(field => (
                     <div key={field} className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id={field}
                         checked={fieldIssues[field] || false}
-                        onCheckedChange={(checked) => 
-                          setFieldIssues({...fieldIssues, [field]: checked === true})
+                        onCheckedChange={(checked) =>
+                          setFieldIssues({ ...fieldIssues, [field]: checked === true })
                         }
                       />
                       <Label htmlFor={field} className="text-sm font-normal">
@@ -911,7 +1060,7 @@ export function ConsolidatedReviewQueue() {
 
             <div>
               <Label>Additional notes (optional)</Label>
-              <Textarea 
+              <Textarea
                 value={rejectionNotes}
                 onChange={(e) => setRejectionNotes(e.target.value)}
                 placeholder="Any additional context..."

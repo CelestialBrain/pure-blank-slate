@@ -6,7 +6,27 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, RefreshCw, Instagram, ClipboardList, MapPin, FolderKanban, Eye, TrendingUp, Database, Square, Eraser, Github, ExternalLink, AlertCircle, Upload, CheckCheck } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  RefreshCw,
+  Instagram,
+  ClipboardList,
+  MapPin,
+  FolderKanban,
+  Eye,
+  TrendingUp,
+  Database,
+  AlertCircle,
+  ExternalLink,
+  Github,
+  Square,
+  Eraser,
+  CheckCircle,
+  BadgeCheck,
+  CheckCheck,
+  Upload
+} from "lucide-react";
 import { ConsolidatedReviewQueue } from "@/components/ConsolidatedReviewQueue";
 import { PublishedEventsManager } from "@/components/PublishedEventsManager";
 import { LocationTemplatesManager } from "@/components/LocationTemplatesManager";
@@ -200,7 +220,7 @@ const Admin = () => {
   const cleanupStuckScrapes = async () => {
     try {
       setIsCleaning(true);
-      
+
       const { data, error } = await supabase.functions.invoke("cleanup-stuck-scrapes", {
         body: { timeoutMinutes: 5 },
       });
@@ -236,17 +256,17 @@ const Admin = () => {
   const triggerScraping = async (isDatasetImport: boolean = false) => {
     try {
       setIsScraping(true);
-      
+
       // First, cleanup any stuck scrapes before starting a new one
       console.log("[Admin] Cleaning up stuck scrapes before starting new scrape...");
       await supabase.functions.invoke("cleanup-stuck-scrapes", {
         body: { timeoutMinutes: 5 },
       });
-      
-      const body = isDatasetImport && datasetId.trim() 
-        ? { datasetId: datasetId.trim() } 
+
+      const body = isDatasetImport && datasetId.trim()
+        ? { datasetId: datasetId.trim() }
         : {};
-        
+
       const { data, error } = await supabase.functions.invoke("scrape-instagram", {
         body,
       });
@@ -329,10 +349,10 @@ const Admin = () => {
       await supabase.from("event_dates").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       await supabase.from("event_updates").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       await supabase.from("validation_logs").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      
+
       // Children of scrape_runs
       await supabase.from("scraper_logs").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      
+
       // Main tables
       await supabase.from("published_events").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       await supabase.from("saved_events").delete().neq("id", "00000000-0000-0000-0000-000000000000");
@@ -340,7 +360,7 @@ const Admin = () => {
       await supabase.from("instagram_posts").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       await supabase.from("ocr_cache").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       await supabase.from("scrape_runs").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      
+
       // PRESERVED: instagram_accounts, known_venues, location_corrections, 
       // account_venue_stats, extraction_patterns, extraction_ground_truth,
       // extraction_feedback, pattern_suggestions
@@ -365,13 +385,13 @@ const Admin = () => {
 
   const stopCurrentScrape = async () => {
     if (!lastRun) return;
-    
+
     try {
       setIsStopping(true);
-      
+
       const { error } = await supabase
         .from("scrape_runs")
-        .update({ 
+        .update({
           status: 'cancelled' as any,
           completed_at: new Date().toISOString(),
           error_message: 'Manually stopped by admin'
@@ -384,7 +404,7 @@ const Admin = () => {
         title: "Scrape Stopped",
         description: "The scrape run has been marked as cancelled",
       });
-      
+
       fetchScrapeRuns();
     } catch (error: any) {
       toast({
@@ -400,7 +420,7 @@ const Admin = () => {
   const backfillImages = async () => {
     try {
       setIsLoading(true);
-      
+
       const { data, error } = await supabase.functions.invoke("backfill-images", {
         body: {},
       });
@@ -427,7 +447,7 @@ const Admin = () => {
   const backfillGroundTruth = async () => {
     try {
       setIsBackfillingGroundTruth(true);
-      
+
       const { data, error } = await supabase.functions.invoke("backfill-ground-truth", {
         body: {},
       });
@@ -454,7 +474,7 @@ const Admin = () => {
   const bulkPublishEvents = async () => {
     try {
       setIsBulkPublishing(true);
-      
+
       // Get all reviewed event posts with coordinates and future dates
       const { data: postsToPublish, error: fetchError } = await supabase
         .from("instagram_posts")
@@ -574,7 +594,7 @@ const Admin = () => {
     try {
       setIsAutoApproving(true);
       const today = new Date().toISOString().split('T')[0];
-      
+
       // Find events that meet auto-approval criteria
       const { data: eventsToApprove, error: fetchError } = await supabase
         .from("instagram_posts")
@@ -621,444 +641,409 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-        <h1 className="text-2xl md:text-3xl font-bold">Admin Dashboard</h1>
-        
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8 selection:bg-accent/30">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border/50 pb-6">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+              Admin Dashboard
+            </h1>
+            <p className="text-muted-foreground mt-2">Manage events, scraping, and platform knowledge.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="px-3 py-1 bg-accent/5 border-accent/20 text-accent">
+              <span className="w-2 h-2 rounded-full bg-accent mr-2 animate-pulse" />
+              Live System
+            </Badge>
+          </div>
+        </div>
+
         <Tabs defaultValue="scraping">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-1">
-            <TabsTrigger value="scraping" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-              <Instagram className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Scraping</span>
-              <span className="sm:hidden">Scrape</span>
+          <TabsList className="flex w-full overflow-x-auto scrollbar-hide bg-muted/30 p-1 rounded-xl border border-border/50 backdrop-blur-sm sticky top-4 z-50">
+            <TabsTrigger value="scraping" className="flex-1 items-center gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-accent transition-all py-2.5">
+              <Instagram className="w-4 h-4" />
+              <span className="text-sm font-medium">Scraping</span>
             </TabsTrigger>
-            <TabsTrigger value="review" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-              <ClipboardList className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Review Queue</span>
-              <span className="sm:hidden">Review</span>
+            <TabsTrigger value="review" className="flex-1 items-center gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-accent transition-all py-2.5">
+              <ClipboardList className="w-4 h-4" />
+              <span className="text-sm font-medium text-nowrap">Review</span>
             </TabsTrigger>
-            <TabsTrigger value="published" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-              <FolderKanban className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Published</span>
-              <span className="sm:hidden">Events</span>
+            <TabsTrigger value="published" className="flex-1 items-center gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-accent transition-all py-2.5">
+              <FolderKanban className="w-4 h-4" />
+              <span className="text-sm font-medium text-nowrap">Events</span>
             </TabsTrigger>
-            <TabsTrigger value="patterns" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-              <TrendingUp className="w-3 h-3 md:w-4 md:h-4" />
-              <span>Patterns</span>
+            <TabsTrigger value="patterns" className="flex-1 items-center gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-accent transition-all py-2.5">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm font-medium text-nowrap">Patterns</span>
             </TabsTrigger>
-            <TabsTrigger value="templates" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-              <MapPin className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Templates</span>
-              <span className="sm:hidden">Loc</span>
+            <TabsTrigger value="templates" className="flex-1 items-center gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-accent transition-all py-2.5">
+              <MapPin className="w-4 h-4" />
+              <span className="text-sm font-medium text-nowrap">Loc</span>
             </TabsTrigger>
-            <TabsTrigger value="knowledge" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-              <Database className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Knowledge</span>
-              <span className="sm:hidden">Data</span>
+            <TabsTrigger value="knowledge" className="flex-1 items-center gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-accent transition-all py-2.5">
+              <Database className="w-4 h-4" />
+              <span className="text-sm font-medium text-nowrap">Data</span>
             </TabsTrigger>
-            <TabsTrigger value="logs" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-              <Eye className="w-3 h-3 md:w-4 md:h-4" />
-              <span>Logs</span>
+            <TabsTrigger value="logs" className="flex-1 items-center gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-accent transition-all py-2.5">
+              <Eye className="w-4 h-4" />
+              <span className="text-sm font-medium text-nowrap">Logs</span>
             </TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="scraping" className="space-y-4 md:space-y-6 mt-4 md:mt-6">
-          
-          {/* Danger Zone - Purge All Posts */}
-          <Card className="border-destructive">
-            <CardHeader className="p-4 md:p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold text-destructive text-base md:text-lg">Danger Zone</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    Delete all posts and events from the database
-                  </p>
-                </div>
-                <Button
-                  variant="destructive"
-                  onClick={purgeAllPosts}
-                  disabled={isPurging}
-                  className="w-full md:w-auto"
-                >
-                  <Trash2 className={`h-4 w-4 mr-2 ${isPurging ? "animate-pulse" : ""}`} />
-                  {isPurging ? "Purging..." : "Purge All Posts"}
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
 
-          {/* GitHub Actions Scraper */}
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Github className="w-5 h-5" />
-                <h3 className="font-semibold text-base md:text-lg">GitHub Actions Scraper</h3>
-                <Badge variant="secondary">For Large Datasets</Badge>
-              </div>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                Process 300+ posts without timeout using Gemini Vision OCR
-              </p>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6 pt-0 space-y-4">
-              <div className="bg-muted p-4 rounded-lg space-y-3">
-                <p className="text-sm font-medium">How to use:</p>
-                <ol className="text-sm space-y-2 list-decimal list-inside text-muted-foreground">
-                  <li>Run your Apify Instagram scrape</li>
-                  <li>Copy the <strong>dataset URL</strong></li>
-                  <li>Click the button below to open GitHub Actions</li>
-                  <li>Click "Run workflow" → Paste URL → Run</li>
-                  <li>Wait 30-60 minutes for processing</li>
-                </ol>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button asChild>
-                  <a 
-                    href="https://github.com/CelestialBrain/wheresthefx/actions/workflows/process-scrape.yml" 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Github className="w-4 h-4 mr-2" />
-                    Run GitHub Actions
-                    <ExternalLink className="w-3 h-3 ml-2" />
-                  </a>
-                </Button>
-              </div>
-              
-              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-blue-700 dark:text-blue-300">
-                  <strong>Tip:</strong> Use this for datasets with 15+ posts. The regular scraper times out on large datasets.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Last Scrape Status */}
-          {lastRun && (
-            <Card>
-              <CardHeader className="p-4 md:p-6">
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <p className="text-xs md:text-sm text-muted-foreground">Last Scrape</p>
-                    <p className="font-semibold text-sm md:text-base mt-1">
-                      {formatTimestamp(lastRun.started_at)} ({getTimeSince(lastRun.started_at)})
-                    </p>
-                    <div className="flex flex-wrap gap-2 md:gap-4 mt-2 text-xs md:text-sm">
-                      <span className={
-                        lastRun.status === 'completed' ? 'text-green-600' : 
-                        lastRun.status === 'failed' ? 'text-red-600' : 
-                        lastRun.status === 'cancelled' ? 'text-orange-600' : 
-                        'text-yellow-600'
-                      }>
-                        {lastRun.status === 'completed' ? '✓ Success' : 
-                         lastRun.status === 'failed' ? '✗ Failed' : 
-                         lastRun.status === 'cancelled' ? '⊘ Cancelled' : 
-                         '⏳ Running'}
-                      </span>
-                      {lastRun.status === 'completed' && (
-                        <>
-                          <span>• Posts Added: {lastRun.posts_added}</span>
-                          <span>• Updated: {lastRun.posts_updated}</span>
-                          <span>• Accounts: {lastRun.accounts_found}</span>
-                        </>
+          <TabsContent value="scraping" className="space-y-6 mt-6 animate-in fade-in duration-500">
+            {/* 1. Status & Primary Controls */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Last Scrape Status */}
+              <div className="lg:col-span-2">
+                {lastRun ? (
+                  <Card className="frosted-glass overflow-hidden border-accent/20 h-full">
+                    <CardHeader className="p-6 pb-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Last Scrape Status</p>
+                          <p className="font-bold text-xl mt-1">
+                            {formatTimestamp(lastRun.started_at)}
+                          </p>
+                          <p className="text-sm text-muted-foreground italic">{getTimeSince(lastRun.started_at)}</p>
+                        </div>
+                        <div className={`p-3 rounded-xl ${lastRun.status === 'completed' ? 'bg-green-500/10 text-green-500' :
+                          lastRun.status === 'failed' ? 'bg-red-500/10 text-red-500' :
+                            'bg-yellow-500/10 text-yellow-500'
+                          }`}>
+                          {lastRun.status === 'completed' ? <CheckCircle className="w-6 h-6" /> :
+                            lastRun.status === 'failed' ? <AlertCircle className="w-6 h-6" /> :
+                              <RefreshCw className="w-6 h-6 animate-spin" />}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 pt-0">
+                      <div className="grid grid-cols-3 gap-4 py-4 border-y border-border/50 my-4">
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-accent">{lastRun.posts_added}</p>
+                          <p className="text-[10px] uppercase text-muted-foreground font-semibold">New Posts</p>
+                        </div>
+                        <div className="text-center border-x border-border/50">
+                          <p className="text-2xl font-bold text-accent">{lastRun.posts_updated}</p>
+                          <p className="text-[10px] uppercase text-muted-foreground font-semibold">Updated</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-accent">{lastRun.accounts_found}</p>
+                          <p className="text-[10px] uppercase text-muted-foreground font-semibold">Accounts</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex gap-2">
+                          <Badge variant="outline" className="bg-background/50">
+                            {formatRunType(lastRun.run_type)}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-2">
+                          {lastRun.status === 'running' && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={stopCurrentScrape}
+                              disabled={isStopping}
+                              className="rounded-lg shadow-sm"
+                            >
+                              <Square className="h-4 w-4 mr-2" />
+                              Stop
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={() => setShowHistory(!showHistory)} className="rounded-lg">
+                            {showHistory ? 'Hide' : 'View'} History
+                          </Button>
+                        </div>
+                      </div>
+                      {lastRun.error_message && (
+                        <div className="mt-4 p-3 bg-red-500/5 border border-red-500/20 rounded-lg text-xs text-red-500">
+                          <strong>Error:</strong> {lastRun.error_message}
+                        </div>
                       )}
-                    </div>
-                    {lastRun.error_message && (
-                      <p className="text-xs text-red-600 mt-2">{lastRun.error_message}</p>
-                    )}
-                  </div>
-                  <div className="flex gap-2 w-full md:w-auto flex-wrap">
-                    {lastRun.status === 'running' && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        onClick={stopCurrentScrape}
-                        disabled={isStopping}
-                        className="w-full md:w-auto"
-                      >
-                        <Square className="h-4 w-4 mr-2" />
-                        {isStopping ? "Stopping..." : "Stop Scrape"}
-                      </Button>
-                    )}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={cleanupStuckScrapes}
-                      disabled={isCleaning}
-                      className="w-full md:w-auto"
-                    >
-                      <Eraser className="h-4 w-4 mr-2" />
-                      {isCleaning ? "Cleaning..." : "Cleanup Stuck"}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setShowHistory(!showHistory)} className="w-full md:w-auto">
-                      {showHistory ? 'Hide' : 'View'} History
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          )}
-
-          {/* Scrape History */}
-          {showHistory && (
-            <Card className="p-4 mb-4">
-              <h3 className="font-semibold mb-3">Scrape History</h3>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {scrapeRuns.map((run) => (
-                  <div key={run.id} className="flex items-center justify-between p-2 border rounded text-sm">
-                    <div>
-                      <span className="font-medium">{formatRunType(run.run_type)}</span>
-                      <span className="text-muted-foreground ml-2">{formatTimestamp(run.started_at)}</span>
-                      {run.dataset_id && <span className="text-xs text-muted-foreground ml-2">({run.dataset_id})</span>}
-                    </div>
-                    <div className="flex gap-3 text-xs">
-                      <span className={
-                        run.status === 'completed' ? 'text-green-600' : 
-                        run.status === 'failed' ? 'text-red-600' : 
-                        run.status === 'cancelled' ? 'text-orange-600' : 
-                        'text-yellow-600'
-                      }>
-                        {run.status}
-                      </span>
-                      {run.status === 'completed' && (
-                        <>
-                          <span>+{run.posts_added}</span>
-                          <span>~{run.posts_updated}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="frosted-glass p-12 text-center text-muted-foreground">
+                    No scrape runs recorded yet.
+                  </Card>
+                )}
               </div>
-            </Card>
-          )}
-          
-          {/* Image Backfill Tool */}
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold text-base md:text-lg">Fix OCR Images</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    Re-download and store Instagram images to fix CORS errors
-                  </p>
-                </div>
-                <Button
-                  onClick={backfillImages}
-                  disabled={isLoading}
-                  variant="outline"
-                  className="w-full md:w-auto"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-                  {isLoading ? "Processing..." : "Backfill Images"}
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
 
-          {/* Auto-Approve Events */}
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold text-base md:text-lg">Auto-Approve Events</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    Approve events with title, future date, and coordinates
-                  </p>
-                </div>
-                <Button
-                  onClick={autoApproveEvents}
-                  disabled={isAutoApproving}
-                  variant="outline"
-                  className="w-full md:w-auto"
-                >
-                  <CheckCheck className={`h-4 w-4 mr-2 ${isAutoApproving ? "animate-pulse" : ""}`} />
-                  {isAutoApproving ? "Approving..." : "Auto-Approve"}
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Bulk Publish Events */}
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold text-base md:text-lg">Bulk Publish Events</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    Publish all reviewed events with coordinates to the map
-                  </p>
-                </div>
-                <Button
-                  onClick={bulkPublishEvents}
-                  disabled={isBulkPublishing}
-                  variant="default"
-                  className="w-full md:w-auto"
-                >
-                  <Upload className={`h-4 w-4 mr-2 ${isBulkPublishing ? "animate-pulse" : ""}`} />
-                  {isBulkPublishing ? "Publishing..." : "Bulk Publish"}
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Dataset Import */}
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <h2 className="text-base md:text-lg font-semibold">Import from Dataset</h2>
-              <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                Paste an Apify dataset URL or ID from a dataset you've already scraped
-              </p>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6 pt-0 space-y-3">
-              <div className="flex flex-col md:flex-row gap-2">
-                <Input
-                  placeholder="Dataset ID or full URL..."
-                  value={datasetId}
-                  onChange={(e) => setDatasetId(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={() => triggerScraping(true)}
-                  disabled={isScraping || !datasetId.trim()}
-                  variant="default"
-                  className="w-full md:w-auto"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isScraping ? "animate-spin" : ""}`} />
-                  {isScraping ? "Importing..." : "Import Now"}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                💡 Accounts will be automatically created from the dataset
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Automated Scraping Section */}
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
-                <div className="flex-1">
-                  <h2 className="text-base md:text-lg font-semibold">Automated Scraping</h2>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                    ⏰ Auto-scrapes daily at 3:00 AM (last 5 posts from 30 days per account)
-                  </p>
-                </div>
-                <Button
-                  onClick={() => triggerScraping(false)}
-                  disabled={isScraping || accounts.length === 0}
-                  variant="outline"
-                  className="w-full md:w-auto"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isScraping ? "animate-spin" : ""}`} />
-                  Scrape Now
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Add New Account */}
-        <Card>
-          <CardHeader className="p-4 md:p-6">
-            <h2 className="text-base md:text-lg font-semibold">Add Instagram Account</h2>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6 pt-0">
-            <div className="flex flex-col md:flex-row gap-2">
-              <Input
-                placeholder="Enter Instagram username (e.g., @username)"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addAccount()}
-                className="flex-1"
-              />
-              <Button onClick={addAccount} disabled={isLoading || !newUsername.trim()} className="w-full md:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Add
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Accounts List */}
-        <Card>
-          <CardHeader className="p-4 md:p-6">
-            <h2 className="text-base md:text-lg font-semibold">
-              Tracked Accounts ({accounts.length})
-            </h2>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6 pt-0">
-          <div className="space-y-3">
-            {accounts.map((account) => (
-              <div
-                key={account.id}
-                className="flex items-center justify-between p-4 border border-border rounded-lg"
-              >
-                <div className="flex items-center gap-3 flex-1">
-                  <Instagram className="h-5 w-5 text-accent" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">@{account.username}</span>
-                      {account.is_verified && (
-                        <Badge variant="secondary">Verified</Badge>
-                      )}
-                      {!account.is_active && (
-                        <Badge variant="outline">Inactive</Badge>
-                      )}
-                    </div>
-                    {account.display_name && (
-                      <p className="text-sm text-muted-foreground">
-                        {account.display_name}
-                      </p>
-                    )}
-                    <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-                      {account.follower_count && (
-                        <span>{account.follower_count.toLocaleString()} followers</span>
-                      )}
-                      {account.last_scraped_at && (
-                        <span>
-                          Last scraped:{" "}
-                          {new Date(account.last_scraped_at).toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
+              {/* Maintenance & Quick Actions */}
+              <Card className="frosted-glass">
+                <CardHeader className="p-6 pb-2">
+                  <h3 className="font-bold text-lg">System Maintenance</h3>
+                </CardHeader>
+                <CardContent className="p-6 space-y-3">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => toggleAccount(account.id, account.is_active)}
+                    onClick={cleanupStuckScrapes}
+                    disabled={isCleaning}
+                    className="w-full justify-start rounded-xl h-11 border-border/50 hover:border-accent/40 transition-colors"
                   >
-                    {account.is_active ? "Deactivate" : "Activate"}
+                    <Eraser className="h-4 w-4 mr-3 text-accent" />
+                    {isCleaning ? "Cleaning..." : "Cleanup Stuck Scrapes"}
                   </Button>
                   <Button
-                    variant="destructive"
+                    onClick={backfillImages}
+                    disabled={isLoading}
+                    variant="outline"
                     size="sm"
-                    onClick={() => deleteAccount(account.id)}
+                    className="w-full justify-start rounded-xl h-11 border-border/50 hover:border-accent/40 transition-colors"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <RefreshCw className={`h-4 w-4 mr-3 text-accent ${isLoading ? "animate-spin" : ""}`} />
+                    Backfill OCR Images
                   </Button>
-                </div>
-              </div>
-            ))}
-            {accounts.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">
-                No accounts added yet. Add your first Instagram account to start tracking events.
-              </p>
-            )}
-          </div>
-          </CardContent>
-        </Card>
-          </TabsContent>
-          
-        <TabsContent value="review">
-          <ConsolidatedReviewQueue />
-        </TabsContent>
+                  <Button
+                    onClick={backfillGroundTruth}
+                    disabled={isBackfillingGroundTruth}
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start rounded-xl h-11 border-border/50 hover:border-accent/40 transition-colors"
+                  >
+                    <ClipboardList className={`h-4 w-4 mr-3 text-accent ${isBackfillingGroundTruth ? "animate-pulse" : ""}`} />
+                    Backfill Ground Truth
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
 
-        <TabsContent value="published">
-          <PublishedEventsManager />
-        </TabsContent>
+            {/* 2. Scraping Methods */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* GitHub Actions Card */}
+              <Card className="frosted-glass overflow-hidden border-l-4 border-l-accent group hover:shadow-lg transition-all duration-300">
+                <CardHeader className="p-6 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-2xl bg-accent/10 text-accent group-hover:scale-110 transition-transform">
+                      <Github className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">GitHub Actions (Vision OCR)</h3>
+                      <Badge variant="secondary" className="bg-accent/5 text-accent border-accent/10 mt-1">For Large Datasets</Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 pt-0 space-y-4">
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    Process bulk Instagram scrapes using concurrent Gemini Vision processing.
+                    Best for ingestion of 15+ posts to avoid timeouts.
+                  </p>
+
+                  <div className="bg-muted/50 p-4 rounded-xl border border-border/50">
+                    <ol className="text-xs space-y-2 list-decimal list-inside text-muted-foreground">
+                      <li>Run Apify scrape & copy **dataset URL**</li>
+                      <li>Click "Run GitHub Actions" below</li>
+                      <li>Paste URL into the workflow input</li>
+                    </ol>
+                  </div>
+
+                  <Button asChild className="w-full rounded-xl h-11 shadow-md bg-accent hover:bg-accent/90">
+                    <a
+                      href="https://github.com/CelestialBrain/wheresthefx/actions/workflows/process-scrape.yml"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2 font-bold" />
+                      Configure & Run Workflow
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Dataset Import Card */}
+              <Card className="frosted-glass group hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
+                <CardHeader className="p-6 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500 group-hover:scale-110 transition-transform">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">Local Dataset Ingest</h3>
+                      <Badge variant="secondary" className="bg-blue-500/5 text-blue-500 border-blue-500/10 mt-1">Quick Edge Ingest</Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 pt-0 space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Import data directly via Supabase Edge Functions. Good for small
+                    batches or testing new extraction rules.
+                  </p>
+                  <div className="flex flex-col gap-2 mt-4">
+                    <Input
+                      placeholder="Dataset ID or full URL..."
+                      value={datasetId}
+                      onChange={(e) => setDatasetId(e.target.value)}
+                      className="rounded-xl border-border/50"
+                    />
+                    <Button
+                      onClick={() => triggerScraping(true)}
+                      disabled={isScraping || !datasetId.trim()}
+                      className="rounded-xl h-11"
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${isScraping ? "animate-spin" : ""}`} />
+                      {isScraping ? "Importing..." : "Start Import"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* 3. Account Management */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Add Account Card */}
+              <div className="lg:col-span-1">
+                <Card className="frosted-glass h-full sticky top-24">
+                  <CardHeader className="p-6">
+                    <h3 className="font-bold text-lg">Add Tracked Account</h3>
+                    <p className="text-xs text-muted-foreground">Monitor specific Instagram accounts daily</p>
+                  </CardHeader>
+                  <CardContent className="p-6 pt-0 space-y-4">
+                    <div className="space-y-3">
+                      <Input
+                        placeholder="@username"
+                        value={newUsername}
+                        onChange={(e) => setNewUsername(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && addAccount()}
+                        className="rounded-xl"
+                      />
+                      <Button onClick={addAccount} disabled={isLoading || !newUsername.trim()} className="w-full rounded-xl">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add to Watchlist
+                      </Button>
+                    </div>
+                    <div className="mt-6 p-4 bg-accent/5 border border-accent/10 rounded-xl space-y-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-accent/80">Daily Automation</h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        All tracked accounts are scraped every day at **3:00 AM** automatically.
+                      </p>
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto text-[11px] text-accent font-semibold"
+                        onClick={() => triggerScraping(false)}
+                      >
+                        Trigger Manual Daily Run →
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Accounts List */}
+              <div className="lg:col-span-2">
+                <Card className="frosted-glass overflow-hidden">
+                  <CardHeader className="p-6 border-b border-border/50">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-lg">Tracked Accounts</h3>
+                      <Badge variant="outline" className="rounded-full px-3">{accounts.length}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-border/50">
+                      {accounts.map((account) => (
+                        <div key={account.id} className="flex items-center justify-between p-4 px-6 hover:bg-muted/30 transition-colors group">
+                          <div className="flex items-center gap-4">
+                            <div className={`p-2 rounded-full ${account.is_active ? 'bg-accent/10 text-accent' : 'bg-muted text-muted-foreground'}`}>
+                              <Instagram className="h-5 w-5" />
+                            </div>
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-sm">@{account.username}</span>
+                                {account.is_verified && <BadgeCheck className="w-3 h-3 text-blue-500" />}
+                                {!account.is_active && <Badge variant="secondary" className="text-[9px] h-4 py-0">Paused</Badge>}
+                              </div>
+                              <p className="text-[11px] text-muted-foreground tabular-nums">
+                                {account.follower_count?.toLocaleString() || '---'} followers •
+                                Scraped {account.last_scraped_at ? getTimeSince(account.last_scraped_at) : 'never'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 rounded-lg"
+                              onClick={() => toggleAccount(account.id, account.is_active)}
+                            >
+                              {account.is_active ? <Square className="h-3 w-3" /> : <RefreshCw className="h-3 w-3" />}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => deleteAccount(account.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* 4. Batch Operations */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+              <Card className="frosted-glass border-green-500/20">
+                <CardHeader className="p-6 pb-2">
+                  <h3 className="font-bold text-lg">Batch Publishing</h3>
+                  <p className="text-xs text-muted-foreground">Move reviewed events to the public live map</p>
+                </CardHeader>
+                <CardContent className="p-6 flex flex-col gap-3">
+                  <Button
+                    onClick={autoApproveEvents}
+                    disabled={isAutoApproving}
+                    variant="outline"
+                    className="w-full justify-start rounded-xl h-11 border-border/50 hover:bg-green-500/5 hover:border-green-500/30 transition-all font-medium"
+                  >
+                    <CheckCheck className={`h-4 w-4 mr-3 text-green-500 ${isAutoApproving ? "animate-pulse" : ""}`} />
+                    {isAutoApproving ? "Approving..." : "Auto-Approve High Conf Events"}
+                  </Button>
+                  <Button
+                    onClick={bulkPublishEvents}
+                    disabled={isBulkPublishing}
+                    className="w-full justify-start rounded-xl h-11 bg-green-600 hover:bg-green-700 shadow-md font-bold"
+                  >
+                    <Upload className={`h-4 w-4 mr-3 ${isBulkPublishing ? "animate-pulse" : ""}`} />
+                    {isBulkPublishing ? "Publishing..." : "Bulk Publish Reviewed Events"}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Danger Zone Moved to Bottom */}
+              <Card className="border-destructive/20 bg-destructive/[0.02]">
+                <CardHeader className="p-6 pb-2">
+                  <h3 className="font-bold text-lg text-destructive">Danger Zone</h3>
+                  <p className="text-xs text-muted-foreground">Irreversible administrative actions</p>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <Button
+                    variant="destructive"
+                    onClick={purgeAllPosts}
+                    disabled={isPurging}
+                    className="w-full justify-start rounded-xl h-11 font-bold"
+                  >
+                    <Trash2 className={`h-4 w-4 mr-3 ${isPurging ? "animate-pulse" : ""}`} />
+                    {isPurging ? "Purging..." : "Purge All Posts & Scrape Data"}
+                  </Button>
+                  <p className="text-[10px] text-muted-foreground mt-3 text-center">
+                    Note: Accounts, known venues, and patterns are preserved.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="review">
+            <ConsolidatedReviewQueue />
+          </TabsContent>
+
+          <TabsContent value="published">
+            <PublishedEventsManager />
+          </TabsContent>
 
           <TabsContent value="patterns">
             <PatternManager />

@@ -129,7 +129,7 @@ All colors MUST be HSL.
 
   /* Frosted glass utility classes */
   .frosted-glass {
-    @apply backdrop-blur-md bg-white/10 dark:bg-black/20 border border-white/20;
+    @apply backdrop-blur-md bg-white/80 dark:bg-black/40 border border-gray-200/60 dark:border-white/20 shadow-sm;
   }
 
   .frosted-glass-purple {

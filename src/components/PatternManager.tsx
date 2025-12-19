@@ -171,12 +171,12 @@ export const PatternManager = () => {
 
   const getTestResults = (): PatternTestResult[] => {
     if (!patterns || !testText.trim()) return [];
-    
+
     const activePatterns = patterns.filter(p => p.is_active);
-    const patternsToTest = testingType === "all" 
-      ? activePatterns 
+    const patternsToTest = testingType === "all"
+      ? activePatterns
       : activePatterns.filter(p => p.pattern_type === testingType);
-    
+
     return patternsToTest.map(pattern => {
       const { matches, error } = testPattern(pattern.pattern_regex);
       return {
@@ -250,15 +250,28 @@ export const PatternManager = () => {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center p-8">Loading patterns...</div>;
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold">Extraction Patterns</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage and train AI patterns for event data extraction
+          </p>
+        </div>
+      </div>
+
       <Tabs defaultValue="patterns" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 gap-1">
-          <TabsTrigger value="patterns" className="text-xs md:text-sm">Patterns</TabsTrigger>
-          <TabsTrigger value="suggestions" className="text-xs md:text-sm relative">
+        <TabsList className="grid w-full grid-cols-5 gap-1 bg-muted/30 p-1 rounded-xl border border-border/50">
+          <TabsTrigger value="patterns" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Patterns</TabsTrigger>
+          <TabsTrigger value="suggestions" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm relative">
             Suggestions
             {suggestionCount && suggestionCount > 0 && (
               <Badge className="ml-1 h-5 w-5 p-0 text-xs flex items-center justify-center bg-accent text-accent-foreground">
@@ -266,17 +279,17 @@ export const PatternManager = () => {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="ground-truth" className="text-xs md:text-sm">
-            Ground Truth
+          <TabsTrigger value="ground-truth" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            Truth
             {groundTruthCount && groundTruthCount > 0 && (
               <span className="ml-1 text-xs text-muted-foreground">({groundTruthCount})</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="learning" className="text-xs md:text-sm">Learning</TabsTrigger>
-          <TabsTrigger value="testing" className="text-xs md:text-sm">Testing</TabsTrigger>
+          <TabsTrigger value="learning" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Learning</TabsTrigger>
+          <TabsTrigger value="testing" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Testing</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="patterns" className="space-y-3 md:space-y-4 mt-4 md:mt-6">
+        <TabsContent value="patterns" className="space-y-4 mt-6">
           {/* Pattern Creation Form */}
           <PatternCreationForm />
 
@@ -314,10 +327,10 @@ export const PatternManager = () => {
               const regexCheck = checkRegexValidity(regexToCheck);
               const healthColor = getPatternHealthColor(pattern.success_count || 0, pattern.failure_count || 0);
               const successRate = getSuccessRateDisplay(pattern.success_count || 0, pattern.failure_count || 0);
-              
+
               return (
-                <Card key={pattern.id} className={`${!regexCheck.valid ? "border-destructive" : ""} ${healthColor}`}>
-                  <CardContent className="p-4 md:p-6">
+                <Card key={pattern.id} className={`frosted-glass border-border/50 ${!regexCheck.valid ? "border-destructive" : ""} ${healthColor}`}>
+                  <CardContent className="p-4">
                     {isEditing ? (
                       /* Edit Mode */
                       <div className="space-y-3">
@@ -384,7 +397,7 @@ export const PatternManager = () => {
                               {(Number(pattern.confidence_score) * 100).toFixed(0)}% confidence
                             </span>
                             {successRate && (
-                              <Badge 
+                              <Badge
                                 variant={getSuccessRateVariant(Number(successRate.replace('%', '')))}
                                 className="text-xs"
                               >
@@ -398,21 +411,21 @@ export const PatternManager = () => {
                               </Badge>
                             )}
                           </div>
-                          
+
                           <code className="block p-2 bg-muted rounded text-xs md:text-sm break-all">
                             {pattern.pattern_regex}
                           </code>
-                          
+
                           {!regexCheck.valid && (
                             <p className="text-xs text-destructive">Error: {regexCheck.error}</p>
                           )}
-                          
+
                           {pattern.pattern_description && (
                             <p className="text-xs md:text-sm text-muted-foreground">
                               {pattern.pattern_description}
                             </p>
                           )}
-                          
+
                           <div className="flex flex-wrap gap-2 md:gap-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <CheckCircle2 className="h-3 w-3 text-green-600" />
@@ -473,13 +486,13 @@ export const PatternManager = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="suggestions" className="mt-4 md:mt-6 space-y-4">
+        <TabsContent value="suggestions" className="mt-6 space-y-4">
           {/* Bulk Actions */}
           <PatternSuggestionsBulkActions />
-          
+
           {/* Individual Review */}
-          <Card>
-            <CardHeader className="p-4 md:p-6">
+          <Card className="frosted-glass border-border/50">
+            <CardHeader className="p-4 border-b border-border/30">
               <CardTitle className="text-base md:text-lg flex items-center gap-2">
                 <Lightbulb className="h-5 w-5" />
                 Pattern Suggestions
@@ -494,10 +507,10 @@ export const PatternManager = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="ground-truth" className="mt-4 md:mt-6">
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base md:text-lg flex items-center gap-2">
+        <TabsContent value="ground-truth" className="mt-6">
+          <Card className="frosted-glass border-border/50">
+            <CardHeader className="p-4 border-b border-border/30">
+              <CardTitle className="text-lg flex items-center gap-2">
                 <Database className="h-5 w-5" />
                 Ground Truth Data
               </CardTitle>
@@ -515,10 +528,10 @@ export const PatternManager = () => {
           <PatternLearner />
         </TabsContent>
 
-        <TabsContent value="testing" className="space-y-4 mt-4 md:mt-6">
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base md:text-lg">Pattern Testing</CardTitle>
+        <TabsContent value="testing" className="space-y-4 mt-6">
+          <Card className="frosted-glass border-border/50">
+            <CardHeader className="p-4 border-b border-border/30">
+              <CardTitle className="text-lg">Pattern Testing</CardTitle>
               <CardDescription className="text-xs md:text-sm">
                 Test your extraction patterns against sample text
               </CardDescription>

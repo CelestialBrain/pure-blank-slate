@@ -91,7 +91,7 @@ export const PublishedEventsManager = () => {
   const [editingDetails, setEditingDetails] = useState(false);
   const [editForm, setEditForm] = useState<EditFormData | null>(null);
   const [undoStack, setUndoStack] = useState<Array<{ eventId: string; field: string; oldValue: any; newValue: any }>>([]);
-  
+
   const queryClient = useQueryClient();
 
   // Helper function to check if event is in the past
@@ -136,7 +136,7 @@ export const PublishedEventsManager = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      
+
       return data as PublishedEvent[];
     },
   });
@@ -146,7 +146,7 @@ export const PublishedEventsManager = () => {
     queryKey: ["edit-history", selectedEvent?.id],
     queryFn: async () => {
       if (!selectedEvent) return [];
-      
+
       const { data, error } = await supabase
         .from("event_edit_history")
         .select("*")
@@ -162,13 +162,13 @@ export const PublishedEventsManager = () => {
 
   // Update event mutation
   const updateEventMutation = useMutation({
-    mutationFn: async ({ 
-      eventId, 
-      updates, 
-      oldValues 
-    }: { 
-      eventId: string; 
-      updates: any; 
+    mutationFn: async ({
+      eventId,
+      updates,
+      oldValues
+    }: {
+      eventId: string;
+      updates: any;
       oldValues: any;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -209,7 +209,7 @@ export const PublishedEventsManager = () => {
         { eventId, field: Object.keys(updates).join(","), oldValue: oldValues, newValue: updates },
         ...prev.slice(0, 9),
       ]);
-      
+
       toast.success("Event updated successfully");
       setEditingDetails(false);
       setEditForm(null);
@@ -320,11 +320,11 @@ export const PublishedEventsManager = () => {
 
   const handleDeleteClick = () => {
     if (!selectedEvent) return;
-    
+
     const eventId = selectedEvent.id;
     const eventTitle = selectedEvent.event_title;
     let timeoutId: NodeJS.Timeout;
-    
+
     toast.success(`Deleting "${eventTitle}"`, {
       duration: 5000,
       action: {
@@ -353,57 +353,68 @@ export const PublishedEventsManager = () => {
   };
 
   if (isLoading) {
-    return <div className="p-4">Loading published events...</div>;
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-lg md:text-xl font-bold">Published Events</h2>
-          <p className="text-xs md:text-sm text-muted-foreground">{events?.length || 0} events published</p>
+          <h2 className="text-xl md:text-2xl font-bold">Published Events</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {events?.length || 0} events • Manage your published events
+          </p>
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={handleUndo}
           disabled={undoStack.length === 0}
-          className="w-full md:w-auto"
+          className="w-full md:w-auto frosted-glass"
         >
           <Undo2 className="w-4 h-4 mr-2" />
-          <span className="hidden md:inline">Undo Last Change</span>
-          <span className="md:hidden">Undo</span>
+          Undo Last Change
         </Button>
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by title or venue..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+      <Card className="frosted-glass border-border/50">
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by title or venue..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-background/50"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Events Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {events?.map((event) => (
-          <Card 
-            key={event.id} 
-            className={`cursor-pointer hover:border-accent transition-colors ${event.event_status === 'cancelled' ? 'opacity-60' : ''}`}
+          <Card
+            key={event.id}
+            className={`cursor-pointer frosted-glass border-border/50 hover:border-accent/50 hover:shadow-lg transition-all duration-300 ${event.event_status === 'cancelled' ? 'opacity-60' : ''}`}
             onClick={() => setSelectedEvent(event)}
           >
-            <CardHeader className="p-4 md:p-6 pb-3">
+            <CardHeader className="p-4 pb-3">
               <div className="flex items-start gap-3">
                 {(event.stored_image_url || event.image_url) && (
-                  <img
-                    src={event.stored_image_url || event.image_url || ''}
-                    alt=""
-                    className={`w-12 h-12 md:w-16 md:h-16 object-cover rounded flex-shrink-0 ${event.event_status === 'cancelled' ? 'grayscale' : ''}`}
-                  />
+                  <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 group">
+                    <img
+                      src={event.stored_image_url || event.image_url || ''}
+                      alt=""
+                      className={`w-full h-full object-cover transition-transform group-hover:scale-110 ${event.event_status === 'cancelled' ? 'grayscale' : ''}`}
+                    />
+                  </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -411,7 +422,7 @@ export const PublishedEventsManager = () => {
                       {event.event_title}
                     </CardTitle>
                     {isPastEvent(event.event_date) && (
-                      <UIBadge variant="secondary" className="text-xs shrink-0">Done</UIBadge>
+                      <UIBadge variant="secondary" className="text-[10px] h-5 shrink-0">Done</UIBadge>
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
@@ -425,12 +436,12 @@ export const PublishedEventsManager = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-4 md:p-6 pt-0 space-y-2">
+            <CardContent className="p-4 pt-0 space-y-3">
               <div className="flex items-start gap-2 text-sm">
-                <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                <MapPin className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                 <span className="line-clamp-1">{event.location_name || "No location"}</span>
               </div>
-              
+
               {/* Price Display */}
               <PriceDisplay
                 isFree={event.is_free}
@@ -439,23 +450,23 @@ export const PublishedEventsManager = () => {
                 priceNotes={event.price_notes}
                 size="sm"
               />
-              
+
               {/* Badges Row */}
               <div className="flex flex-wrap gap-1">
                 {event.category && (
-                  <UIBadge variant="outline" className="text-xs">
+                  <UIBadge variant="outline" className="text-[10px] h-5">
                     {CATEGORY_LABELS[event.category] || event.category}
                   </UIBadge>
                 )}
-                <RecurringEventBadge 
-                  isRecurring={event.is_recurring} 
+                <RecurringEventBadge
+                  isRecurring={event.is_recurring}
                   pattern={event.recurrence_pattern}
                   size="sm"
                 />
-                {event.event_status && event.event_status !== 'confirmed' && 
+                {event.event_status && event.event_status !== 'confirmed' &&
                   getStatusBadge(event.event_status, EVENT_STATUS_OPTIONS)
                 }
-                {event.availability_status && event.availability_status !== 'available' && 
+                {event.availability_status && event.availability_status !== 'available' &&
                   getStatusBadge(event.availability_status, AVAILABILITY_STATUS_OPTIONS)
                 }
               </div>
@@ -463,6 +474,20 @@ export const PublishedEventsManager = () => {
           </Card>
         ))}
       </div>
+
+      {(!events || events.length === 0) && (
+        <Card className="frosted-glass border-border/50">
+          <CardContent className="py-12 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+              <Calendar className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium">No published events</h3>
+            <p className="text-muted-foreground mt-1 max-w-sm mx-auto">
+              {searchQuery ? "No events match your search." : "Events you publish will appear here."}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Event Detail Modal */}
       <Dialog open={!!selectedEvent} onOpenChange={(open) => {
@@ -707,11 +732,11 @@ export const PublishedEventsManager = () => {
                       <div><strong>Time:</strong> {formatTimeRange(selectedEvent.event_time, selectedEvent.end_time) || 'TBA'}</div>
                       <div><strong>Category:</strong> {CATEGORY_LABELS[selectedEvent.category || ''] || selectedEvent.category || 'Other'}</div>
                       <div className="flex items-center gap-2">
-                        <strong>Status:</strong> 
+                        <strong>Status:</strong>
                         {getStatusBadge(selectedEvent.event_status, EVENT_STATUS_OPTIONS)}
                       </div>
                       <div className="flex items-center gap-2">
-                        <strong>Availability:</strong> 
+                        <strong>Availability:</strong>
                         {getStatusBadge(selectedEvent.availability_status, AVAILABILITY_STATUS_OPTIONS)}
                       </div>
                       <div className="flex items-center gap-2">
@@ -727,8 +752,8 @@ export const PublishedEventsManager = () => {
                       {selectedEvent.is_recurring && (
                         <div className="col-span-2 flex items-center gap-2">
                           <strong>Recurring:</strong>
-                          <RecurringEventBadge 
-                            isRecurring={selectedEvent.is_recurring} 
+                          <RecurringEventBadge
+                            isRecurring={selectedEvent.is_recurring}
                             pattern={selectedEvent.recurrence_pattern}
                           />
                         </div>
@@ -804,7 +829,7 @@ export const PublishedEventsManager = () => {
                       }}
                       onSave={async (correction) => {
                         const { data: { user } } = await supabase.auth.getUser();
-                        
+
                         const oldValues = {
                           location_name: selectedEvent.location_name,
                           location_address: selectedEvent.location_address,
@@ -824,7 +849,7 @@ export const PublishedEventsManager = () => {
                           updates,
                           oldValues,
                         });
-                        
+
                         // Save to location_corrections for learning
                         await supabase.from("location_corrections").insert({
                           corrected_venue_name: correction.venueName,

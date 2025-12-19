@@ -55,7 +55,7 @@ export const LocationTemplatesManager = () => {
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const { error } = await supabase
         .from("location_templates")
         .insert({
@@ -154,16 +154,20 @@ export const LocationTemplatesManager = () => {
   };
 
   if (isLoading) {
-    return <div className="p-4">Loading templates...</div>;
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-lg md:text-xl font-bold">Location Templates</h2>
-          <p className="text-xs md:text-sm text-muted-foreground">
+          <h2 className="text-xl md:text-2xl font-bold">Location Templates</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Save frequently used locations for quick event creation
           </p>
         </div>
@@ -275,10 +279,10 @@ export const LocationTemplatesManager = () => {
       </div>
 
       {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {templates?.map((template) => (
-          <Card key={template.id}>
-            <CardHeader className="p-4 md:p-6 pb-3">
+          <Card key={template.id} className="frosted-glass border-border/50 hover:border-accent/30 transition-colors">
+            <CardHeader className="p-4 pb-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <CardTitle className="text-sm md:text-base truncate">{template.template_name}</CardTitle>
@@ -338,11 +342,11 @@ export const LocationTemplatesManager = () => {
       </div>
 
       {templates?.length === 0 && (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+        <Card className="frosted-glass border-border/50">
+          <CardContent className="py-12 text-center">
+            <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <p className="text-lg font-medium">No templates yet</p>
-            <p className="text-muted-foreground">Create your first location template</p>
+            <p className="text-muted-foreground text-sm">Create your first location template</p>
           </CardContent>
         </Card>
       )}
