@@ -7,7 +7,7 @@
  * @version 2.0.0
  */
 
-export const PROMPT_VERSION = '2.1.0'; // Fixed relative date handling (tonight/today/ngayon)
+export const PROMPT_VERSION = '2.3.0'; // Added artist/lineup and sub-event detection
 
 // ============================================================
 // SHARED CONTEXT HELPERS
@@ -49,6 +49,23 @@ export const promptSections = {
    - If time not visible → eventTime: null
    - If price not visible → price: null
    - If venue not visible → locationName: null
+
+=== TITLE EXTRACTION RULES ===
+- PREFER the specific "Market Name" or "Artist/Event Name" from stylized text.
+- EXCLUDE generic/instructional text: "Final Reminders", "Checklist", "See you there", "Pop-up", "Coming soon".
+- If stylized text is unavailable, use the first 50 chars of caption but remove common promo words.
+
+=== ARTIST & LINEUP RULES ===
+- IDENTIFY performers, DJs, or guest speakers.
+- LOOK FOR words like "featuring", "with", "selectors", "heavy hitters", or lists of handles.
+- EXCLUDE the venue name from the artist list.
+- CLEAN handles: "@artist_name" → "Artist Name".
+
+=== SUB-EVENT DETECTION ===
+- Some posts list multiple events (e.g., a "Class Showcase" AND an "Art Mart").
+- If multiple distinct events are listed for the same date/venue, extract them as sub-events.
+- Primary eventTitle should be the main "umbrella" title if it exists.
+
 When sources conflict → PREFER image/poster text
 `,
 
@@ -89,7 +106,11 @@ MULTI-DAY EVENTS:
 - "Dec 6-7" → eventDate: first date, eventEndDate: last date
 - If end time < start time → event crosses midnight, adjust eventEndDate
 
-VALIDATION: Cross-check with day of week if mentioned
+🚨 ONGOING EVENTS (CRITICAL Logic) 🚨
+If POST DATE (${postDate || 'unknown'}) is BETWEEN eventDate and eventEndDate (inclusive):
+- The event is STILL ACTIVE. Set isEvent: true.
+- Do NOT reject as a "past event" just because it started yesterday.
+- Only reject as past if POST DATE is strictly AFTER eventEndDate (or eventDate if not multi-day).
 `,
 
     /**
@@ -111,8 +132,10 @@ CONTEXT-BASED AM/PM INFERENCE:
 - "tanghali" = noon (~12:00), "hapon" = afternoon (PM)
 
 MIDNIGHT CROSSING:
-- End time < start time → event crosses midnight
-- "10PM - 4AM" on Dec 7 → endTime: 04:00, eventEndDate: Dec 8
+- If end time < start time (e.g., 10PM - 2AM) → event crosses midnight.
+- MUST set eventEndDate = eventDate + 1 day (unless eventEndDate is already later).
+- Examples: 
+  * "10PM - 4AM" on Dec 7 → endTime: 04:00, eventEndDate: Dec 8
 `,
 
     /**
@@ -129,7 +152,7 @@ PRIORITY ORDER:
 
 EXTRACTION RULES:
 - Extract ONLY venue name, stop at dates/times/hashtags
-- "@radius_katipunan" → "Radius Katipunan"
+- CLEAN HANDLES: "@radius_katipunan" → "Radius Katipunan" (Strip '@', replace '_' and '.' with spaces, Title Case)
 - Split venue and address when possible
 
 DO NOT USE AS VENUE:
@@ -167,7 +190,10 @@ VALIDATION:
 - Promo language: "Visit us", "Come check out", "Be in the loop"
 - Rate sheets/menus: price lists for services, not event tickets
 - Teasers: "Coming soon", "TBA", "Watch this space"
-- Past events: date before ${today}, "throwback", "last night", "was amazing"
+- Past events: 
+  * If single day: date strictly before ${today}
+  * If multi-day: eventEndDate strictly before ${today}
+  * Keywords: "throwback", "last night was", "thank you for coming" (without future dates)
 - Giveaways/contests: "GIVEAWAY", "win a", "tag 2 friends"
 - Vendor calls: "calling all vendors", "booth rental", "vendor applications"
 `,
@@ -228,7 +254,7 @@ MONTHS: Enero, Pebrero, Marso, Abril, Mayo, Hunyo, Hulyo, Agosto, Setyembre, Okt
 - nightlife: clubs, bars, DJ sets, parties → "Freaky Friday at Club X"
 - music: concerts, gigs, live bands → "Album Launch: Artist Live"
 - art_culture: galleries, theater, exhibits → "Art Exhibition Opening"
-- markets: bazaars, pop-ups, flea markets → "Christmas Bazaar 2025"
+- markets: bazaars, pop-ups, flea markets, thrift sales → "Christmas Bazaar 2025"
 - food: food festivals, tastings → "Ramen Pop-up Event"
 - workshops: classes, seminars → "Photography Workshop"
 - community: meetups, fundraisers → "Volunteer Day"
@@ -377,7 +403,15 @@ ${promptSections.confidenceScoring}
   "originalDate": "YYYY-MM-DD or null",
   "reason": "string or null",
   "availabilityStatus": "available|sold_out|waitlist|limited|few_left or null",
-  "locationStatus": "confirmed|tba|secret|dm_for_details or null"
+  "locationStatus": "confirmed|tba|secret|dm_for_details or null",
+  "artists": ["string"],
+  "subEvents": [
+    {
+      "title": "string",
+      "time": "HH:MM:SS or null",
+      "description": "string or null"
+    }
+  ]
 }`;
 
     return prompt;
@@ -448,7 +482,15 @@ Return ONLY valid JSON (no markdown):
   "isUpdate": boolean,
   "updateType": "reschedule|cancel|venue_change|time_change or null",
   "availabilityStatus": "available|sold_out|waitlist|limited|few_left or null",
-  "locationStatus": "confirmed|tba|secret|dm_for_details or null"
+  "locationStatus": "confirmed|tba|secret|dm_for_details or null",
+  "artists": ["string"],
+  "subEvents": [
+    {
+      "title": "string",
+      "time": "HH:MM:SS or null",
+      "description": "string or null"
+    }
+  ]
 }`;
 
     return prompt;
@@ -546,8 +588,17 @@ Return ONLY valid JSON (no markdown):
   "locationStatus": "confirmed|tba|secret|dm_for_details or null",
   "category": "nightlife|music|art_culture|markets|food|workshops|community|comedy|other",
   "isRecurring": boolean,
-  "recurrencePattern": "string or null"
-}`;
+  "recurrencePattern": "string or null",
+  "artists": ["string"],
+  "subEvents": [
+    {
+      "title": "string",
+      "time": "HH:MM:SS or null",
+      "description": "string or null"
+    }
+  ]
+}
+`;
 
     return prompt;
 }
