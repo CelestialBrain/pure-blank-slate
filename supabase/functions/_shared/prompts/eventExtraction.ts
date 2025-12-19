@@ -7,7 +7,7 @@
  * @version 2.0.0
  */
 
-export const PROMPT_VERSION = '2.4.0'; // Added retrospective detection + improved date/venue inference
+export const PROMPT_VERSION = '2.5.0'; // Added expired weekend, venue inference, series detection, door/show time, age/dress code
 
 // ============================================================
 // SHARED CONTEXT HELPERS
@@ -101,6 +101,14 @@ TODAY (processing date): ${today} ← DO NOT use for "tonight/today/ngayon"
 When caption contains: "tonight", "today", "ngayon", "mamaya", "tomorrow", "bukas"
 → Calculate date from POST DATE (${postDate || 'unknown'}), NOT from today (${today})!
 
+🚨 EXPIRED RELATIVE DATES (NEW - v2.5) 🚨
+If caption says "this weekend", "this Saturday", "tonight", "today":
+- Calculate the intended date from POST DATE
+- If that date is MORE THAN 3 DAYS before TODAY (${today}):
+  → isEvent: false
+  → rejectionReason: "relative_date_expired"
+  → reasoning: "Post from ${postDate || 'unknown'} says 'this weekend' but that weekend has passed"
+
 EXAMPLES (if post date is ${postDate || '2025-12-14'}):
 - "See you tonight!" → eventDate: ${postDate || '2025-12-14'} (NOT ${today})
 - "Join us today" → eventDate: ${postDate || '2025-12-14'} (NOT ${today})
@@ -151,6 +159,13 @@ CONTEXT-BASED AM/PM INFERENCE:
 - "gabi" = evening (PM), "umaga" = morning (AM)
 - "tanghali" = noon (~12:00), "hapon" = afternoon (PM)
 
+=== DOOR TIME vs SHOW TIME (NEW - v2.5) ===
+If poster shows separate times:
+- "Doors: 7PM / Show: 9PM" or "Gates open: 6PM / Starts: 8PM"
+- eventTime = doors/gates time (when venue opens)
+- showTime = actual performance/event start time
+- If only one time given, use as eventTime
+
 MIDNIGHT CROSSING:
 - If end time < start time (e.g., 10PM - 2AM) → event crosses midnight.
 - MUST set eventEndDate = eventDate + 1 day (unless eventEndDate is already later).
@@ -169,16 +184,25 @@ PRIORITY ORDER:
 3. 📍 emoji followed by location
 4. "at [Place]" or "sa [Place]" patterns
 5. Instagram location tag
+6. @venue_handle that matches venue patterns (NEW - v2.5)
 
 EXTRACTION RULES:
 - Extract ONLY venue name, stop at dates/times/hashtags
 - CLEAN HANDLES: "@radius_katipunan" → "Radius Katipunan" (Strip '@', replace '_' and '.' with spaces, Title Case)
 - Split venue and address when possible
 
+=== VENUE INFERENCE FROM @MENTIONS (NEW - v2.5) ===
+If explicit venue not found, check @mentions for venue patterns:
+- @handles containing: bar, cafe, club, gallery, space, room, lounge, studio
+- @handles that are clearly venue names (e.g., @electricsala, @oddcafe)
+- Use with locationStatus: 'inferred'
+- Add to reasoning: "Venue inferred from @mention"
+
 DO NOT USE AS VENUE:
-- @mentions (usually artists/DJs/photographers)
+- @mentions of people/DJs/artists (usually have personal names)
 - Words after "with"/"featuring" (performers)
 - Account username
+- @handles that are clearly people (@dj_name, @artist_name)
 `,
 
     /**
@@ -192,8 +216,14 @@ FORMATS:
 - "₱300-500" → priceMin: 300, priceMax: 500
 - "₱500 GA / ₱1500 VIP" → priceMin: 500, priceMax: 1500, priceNotes: "GA ₱500, VIP ₱1500"
 
-FREE DETECTION:
-- "FREE" / "LIBRE" / "Walang bayad" / "No cover" → isFree: true, price: null
+=== FREE DETECTION (IMPROVED - v2.5) ===
+FREE ENTRY (isFree: true):
+- "FREE ENTRY" / "FREE ADMISSION" / "No cover charge"
+- "LIBRE" / "Walang bayad" / "Free entrance"
+
+NOT FREE ENTRY (isFree: false):
+- "FREE beer" / "FREE merch" / "FREE drink" → freebies at event, not free entry
+- "FREE for first 50" → conditional, set isFree: false, priceNotes: "Free for first 50"
 
 VALIDATION:
 - Philippine events typically ₱100-₱5000
@@ -277,6 +307,26 @@ For recurring, eventDate = next occurrence from ${today}
 - "secret location" → locationStatus: 'secret'
 - "location TBA" → locationStatus: 'tba'
 - "DM for address" → locationStatus: 'dm_for_details'
+
+=== EVENT SERIES DETECTION (NEW - v2.5) ===
+If title contains ordinal or edition number:
+- "Vol. 2", "Part 3", "Year 5", "2nd Anniversary", "Edition 4"
+- Extract: seriesName (base name), seriesNumber (numeric)
+- Examples:
+  * "Sala Sessions Vol. 2" → seriesName: "Sala Sessions", seriesNumber: 2
+  * "Wet Market's 2nd Anniversary" → seriesName: "Wet Market", seriesNumber: 2
+
+=== AGE RESTRICTION (NEW - v2.5) ===
+Look for age requirements:
+- "18+", "21+", "Strictly 18 and above"
+- "With valid ID", "ID required"
+→ Extract to ageRestriction: "18+" or "21+" or null
+
+=== DRESS CODE (NEW - v2.5) ===
+Look for attire requirements:
+- "Smart casual", "All black", "No slippers", "White party"
+- "Formal attire", "Dress to impress"
+→ Extract to dressCode: string or null
 `,
 
     /**
@@ -456,7 +506,12 @@ ${promptSections.confidenceScoring}
       "time": "HH:MM:SS or null",
       "description": "string or null"
     }
-  ]
+  ],
+  "showTime": "HH:MM:SS or null (actual performance time if different from doors)",
+  "seriesName": "string or null (e.g., 'Sala Sessions')",
+  "seriesNumber": "number or null (e.g., 2 for Vol. 2)",
+  "ageRestriction": "18+|21+ or null",
+  "dressCode": "string or null"
 }`;
 
     return prompt;
